@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NANKOTSU ストレングス・ラボ (AI Integrated)</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #27ae60;
+            --sub-color: #e74c3c;
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+            --executing: #8e44ad;
+            --influencing: #d35400;
+            --relationship: #2980b9;
+            --strategic: #27ae60;
+        }
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        .container {
+            background: white;
+            width: 100%;
+            max-width: 800px;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            text-align: center;
+            position: relative;
+        }
+        .coach-header { border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
+        .coach-title { font-size: 14px; color: #7f8c8d; font-weight: bold; letter-spacing: 1px; }
+        h1 { font-size: 24px; color: var(--primary-color); margin: 10px 0; }
+
+        .btn-back {
+            position: absolute; top: 20px; left: 20px; background: none; border: none;
+            color: #999; font-size: 14px; cursor: pointer; padding: 5px; z-index: 10;
+        }
+
+        /* 質問エリア */
+        .question-statement { font-size: 1.2em; font-weight: bold; margin-bottom: 20px; min-height: 3em; line-height: 1.5; }
+        .question-type-badge {
+            background: #eee; color: #555; padding: 2px 8px; border-radius: 4px;
+            font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: inline-block;
+        }
+        .choices-wrapper { display: flex; justify-content: space-between; margin-bottom: 20px; gap: 15px; }
+        .choice-box { 
+            width: 48%; padding: 15px; border-radius: 8px; background: #f9f9f9; 
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
+            font-size: 0.95em; font-weight: bold; color: var(--primary-color); border: 1px solid #eee; position: relative; line-height: 1.4;
+        }
+        .choice-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; color: white; font-size: 12px; margin-bottom: 8px; font-weight: bold; }
+        .box-a { border-top: 4px solid var(--sub-color); }
+        .badge-a { background-color: var(--sub-color); }
+        .box-b { border-top: 4px solid var(--accent-color); }
+        .badge-b { background-color: var(--accent-color); }
+
+        /* ボタン */
+        .scale-container { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 5px 0; gap: 5px; }
+        .scale-btn { 
+            width: 50px; height: 50px; border-radius: 50%; border: 2px solid #ddd; background: white; 
+            cursor: pointer; transition: all 0.2s; display: flex; justify-content: center; align-items: center; 
+            font-weight: bold; color: #666; font-size: 14px; flex-shrink: 0; 
+        }
+        .scale-btn.large { width: 60px; height: 60px; font-size: 18px; }
+        .btn-color-a:hover { border-color: var(--sub-color); color: var(--sub-color); }
+        .btn-color-b:hover { border-color: var(--accent-color); color: var(--accent-color); }
+        .scale-btn:active { transform: scale(0.95); background-color: #f0f0f0; }
+        .scale-guide { display: flex; justify-content: space-between; font-size: 11px; color: #888; margin-bottom: 20px; padding: 0 5px; }
+
+        /* プログレスバー */
+        .progress-section { margin-top: 10px; }
+        .progress-bar-bg { width: 100%; height: 6px; background: #eee; border-radius: 3px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: var(--accent-color); width: 0%; transition: width 0.3s; }
+
+        /* スタート画面のボタン群 */
+        .start-btn-group { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; align-items: center; }
+        .btn-mode { padding: 15px 30px; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; max-width: 320px; border: 2px solid transparent; transition: all 0.2s; }
+        .btn-simple { background: white; border-color: var(--accent-color); color: var(--accent-color); }
+        .btn-simple:hover { background: #f0f9f4; }
+        .btn-precision { background: var(--accent-color); color: white; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3); }
+        .btn-precision:hover { background: #219150; transform: translateY(-2px); }
+
+        /* 結果画面スタイル */
+        .report-section { text-align: left; margin-bottom: 40px; }
+        .report-title { font-size: 1.2em; font-weight: bold; color: var(--primary-color); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+        
+        #radar-chart-container { width: 100%; max-width: 350px; margin: 0 auto 20px auto; position: relative; }
+        .radar-polygon { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: drawPoly 1.5s forwards ease-out; }
+        @keyframes drawPoly { to { stroke-dashoffset: 0; } }
+
+        .balance-bar-container { display: flex; height: 20px; width: 100%; border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
+        .balance-bar { height: 100%; }
+        .balance-legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 11px; color: #666; justify-content: center; margin-bottom: 20px;}
+        .legend-dot { width: 10px; height: 10px; display: inline-block; border-radius: 50%; margin-right: 3px; }
+
+        /* アドバイスボックス（静的） */
+        .advice-box { 
+            background: #fff; border: 1px solid #eee; padding: 20px; border-radius: 8px; margin-bottom: 20px; font-size: 0.95em; line-height: 1.7;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .advice-header { font-weight: bold; color: var(--primary-color); margin-bottom: 10px; display: block; border-bottom: 1px dashed #ddd; padding-bottom: 5px;}
+        .advice-sub { font-size: 0.9em; color: #7f8c8d; margin-bottom: 5px; font-weight: bold; }
+        .advice-text { margin-bottom: 10px; }
+        .advice-weakness { background: #fff5f5; border-left: 5px solid #e74c3c; }
+        
+        /* ▼▼▼ AIチャット UIスタイル (追加) ▼▼▼ */
+        .ai-chat-wrapper {
+            background: #f4f6f8;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            border: 1px solid #e1e4e8;
+        }
+        .chat-history {
+            max-height: 500px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 5px;
+        }
+        .message {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.95em;
+            line-height: 1.6;
+            max-width: 90%;
+            word-wrap: break-word;
+        }
+        .message-ai {
+            background: white;
+            color: #333;
+            align-self: flex-start;
+            border: 1px solid #e0e0e0;
+            white-space: pre-wrap; /* 改行を反映 */
+        }
+        .message-user {
+            background: var(--accent-color);
+            color: white;
+            align-self: flex-end;
+            text-align: left;
+        }
+        .loading-dots {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9em;
+            padding: 10px;
+            display: none; /* デフォルト非表示 */
+        }
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+        }
+        .chat-input:focus { border-color: var(--accent-color); }
+        .btn-send {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-send:hover { background: #1a252f; }
+        .btn-send:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* ▼▼▼ リストスタイル（常時表示型） ▼▼▼ */
+        .rank-list { list-style: none; padding: 0; margin: 0; }
+        .rank-item { 
+            border-bottom: 1px solid #eee; background: #fff; padding: 15px;
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .rank-item:last-child { border-bottom: none; }
+        
+        .rank-item.top5 { background: #fdfdfd; border-left: 4px solid var(--accent-color); padding-left: 11px; }
+        .rank-item.bottom5 { background: #fafafa; color: #999; }
+
+        .rank-main-row { display: flex; align-items: center; justify-content: space-between; }
+        
+        .rank-num { font-weight: bold; width: 30px; text-align: center; color: #999; font-size: 1.1em;}
+        .top5 .rank-num { color: var(--accent-color); font-size: 1.3em; }
+        
+        .rank-name { font-weight: bold; font-size: 1.05em; color: var(--primary-color); display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
+        .rank-name small { font-weight: normal; color: #aaa; font-size: 0.85em; }
+        
+        .domain-tag { font-size: 0.7em; padding: 2px 6px; border-radius: 4px; color: white; vertical-align: text-bottom; margin-right: 5px; }
+        
+        .rank-desc { font-size: 0.9em; color: #666; margin-left: 30px; line-height: 1.5; }
+
+        .btn-start { background: var(--accent-color); color: white; border: none; padding: 15px 40px; font-size: 18px; border-radius: 30px; cursor: pointer; font-weight: bold; margin-top: 20px; width: 100%; max-width: 300px; }
+        .hidden { display: none; }
+
+        @media (max-width: 600px) {
+            .container { padding: 25px 20px; margin-top: 10px; }
+            .scale-btn { width: 13vw; height: 13vw; max-width: 50px; max-height: 50px; }
+            .rank-desc { margin-left: 0; margin-top: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <button id="btn-back" class="btn-back hidden" onclick="goBack()">&#8592; 戻る</button>
+
+    <div class="coach-header">
+        <div class="coach-title">Strengths Coach AI</div>
+        <h1 id="page-title">才能の源泉診断</h1>
+    </div>
+
+    <div id="start-screen">
+        <div style="text-align: left; background: #eef2f5; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <p><strong>【診断モードを選択】</strong></p>
+            <ul style="padding-left: 20px; color: #555; font-size: 0.95em;">
+                <li><strong>簡易診断 (34問)</strong>: 時間がない方向け。各資質1問で傾向を見ます。</li>
+                <li><strong>精密診断 (102問)</strong>: 本格的な分析用。各資質3問で深く掘り下げます。</li>
+            </ul>
+        </div>
+        
+        <div class="start-btn-group">
+            <button class="btn-mode btn-simple" onclick="startQuiz('simple')">⚡️ サクッと簡易診断 (34問)</button>
+            <button class="btn-mode btn-precision" onclick="startQuiz('precision')">🔍 ガッツリ精密診断 (102問)</button>
+        </div>
+    </div>
+
+    <div id="quiz-screen" class="hidden">
+        <span id="q-type" class="question-type-badge">Q</span>
+        <div id="question-text" class="question-statement">質問文</div>
+
+        <div class="choices-wrapper">
+            <div class="choice-box box-a">
+                <span class="choice-badge badge-a">A</span>
+                <span id="text-a">Aの選択肢</span>
+            </div>
+            <div class="choice-box box-b">
+                <span class="choice-badge badge-b">B</span>
+                <span id="text-b">Bの選択肢</span>
+            </div>
+        </div>
+
+        <div class="scale-container">
+            <button class="scale-btn large btn-color-a" onclick="handleAnswer(1)">A</button>
+            <button class="scale-btn medium btn-color-a" onclick="handleAnswer(2)">Aやや</button>
+            <button class="scale-btn small" onclick="handleAnswer(3)">ー</button>
+            <button class="scale-btn medium btn-color-b" onclick="handleAnswer(4)">Bやや</button>
+            <button class="scale-btn large btn-color-b" onclick="handleAnswer(5)">B</button>
+        </div>
+
+        <div class="scale-guide">
+            <span style="color:var(--sub-color)">← Aに強く当てはまる</span>
+            <span style="color:var(--accent-color)">Bに強く当てはまる →</span>
+        </div>
+
+        <div class="progress-section">
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:12px; color:#aaa;">
+                <span id="progress-text">0 / 0</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div id="progress-bar" class="progress-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-screen" class="hidden">
+        
+        <div class="report-section">
+            <div class="report-title">あなたのエネルギーバランス</div>
+            <div id="radar-chart-container"></div>
+            <div class="balance-bar-container" id="balance-bar-container"></div>
+            <div class="balance-legend">
+                <span><span class="legend-dot" style="background:var(--executing)"></span>実行力</span>
+                <span><span class="legend-dot" style="background:var(--influencing)"></span>影響力</span>
+                <span><span class="legend-dot" style="background:var(--relationship)"></span>人間関係</span>
+                <span><span class="legend-dot" style="background:var(--strategic)"></span>戦略的思考</span>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <div class="report-title">AIコーチによる詳細分析</div>
+            <p style="font-size:0.9em; color:#666;">あなたの診断結果に基づき、世界トップクラスのコーチAIが強みの活かし方をアドバイスします。</p>
+            
+            <div class="ai-chat-wrapper">
+                <div id="chat-history" class="chat-history">
+                    </div>
+                
+                <div id="loading-indicator" class="loading-dots">
+                    AIが分析レポートを作成中... 🖊️<br><small>(30秒ほどかかる場合があります)</small>
+                </div>
+
+                <div class="chat-input-area">
+                    <input type="text" id="user-input" class="chat-input" placeholder="質問を入力 (例: 営業職はどう？)" disabled>
+                    <button id="btn-send" class="btn-send" onclick="sendUserMessage()" disabled>➤</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <div class="report-title">全34資質の構成レポート</div>
+            <ul id="full-rank-list" class="rank-list"></ul>
+        </div>
+
+        <button class="btn-start" onclick="location.reload()" style="background:#95a5a6; margin-top:30px;">トップに戻る</button>
+    </div>
+</div>
+
+<script>
+    // ▼▼▼ APIキー設定エリア ▼▼▼
+    // ここにDifyで取得したAPIキーを入力してください。
+    // ※注意: Webサイトとして公開する場合、このキーは他人に見える可能性があります。
+    // 本番運用ではサーバーサイド経由でアクセスすることを推奨します。
+    const DIFY_API_KEY = "app-m83jKdkjZkNWiNjMzuHeBcD8"; 
+    const DIFY_BASE_URL = "https://api.dify.ai/v1";
+
+    // チャット用変数
+    let conversationId = "";
+    let userId = "user_" + Math.random().toString(36).substr(2, 9); // ランダムなユーザーID
+
+    // データ定義 (短縮のため一部省略なしでそのまま使います)
+    const diagnosisData = {
+      "themes": [
+        // --- 実行力 ---
+        { "name_jp": "達成欲", "name_en": "Achiever", "domain": "Executing", "summary": { "desc": "スタミナ旺盛で、毎日何かを成し遂げたい欲求を持つ。" }, "questions": [{ "text": "何もない休日、頭の中は？", "options": {"A": "完全に休める", "B": "何か有意義なことをしなきゃとソワソワ"} }, { "text": "一日の終わりの最高の気分？", "options": {"A": "楽しく過ごせた時", "B": "やるべきことを全部終わらせた時"} }, { "text": "リストを消すのが好き？", "options": {"A": "ない", "B": "大好き"} }] },
+        { "name_jp": "アレンジ", "name_en": "Arranger", "domain": "Executing", "summary": { "desc": "多くの要素を整理し、最も効率的な構成を組み立てる。" }, "questions": [{ "text": "複雑な状況？", "options": {"A": "手順通りやりたい", "B": "効率的に組み替えたい"} }, { "text": "急な予定変更？", "options": {"A": "ストレス", "B": "どう捌くかワクワクする"} }, { "text": "旅行の計画？", "options": {"A": "計画通り", "B": "直前まで変える"} }] },
+        { "name_jp": "信念", "name_en": "Belief", "domain": "Executing", "summary": { "desc": "確固たる価値観を持ち、それに基づいて行動する。" }, "questions": [{ "text": "仕事選びで大事なのは？", "options": {"A": "条件やメリット", "B": "価値観に合うか"} }, { "text": "熱く燃えている人を見ると？", "options": {"A": "冷静になればいいのに", "B": "心を動かされる"} }, { "text": "信条に反する仕事？", "options": {"A": "割り切る", "B": "断る"} }] },
+        { "name_jp": "公平性", "name_en": "Consistency", "domain": "Executing", "summary": { "desc": "あらゆる人を平等に扱い、一貫したルールを重んじる。" }, "questions": [{ "text": "チーム運営で大事なのは？", "options": {"A": "個別の事情", "B": "全員同じルール"} }, { "text": "特別扱いを見ると？", "options": {"A": "流す", "B": "不公平だとイラつく"} }, { "text": "マニュアル化？", "options": {"A": "臨機応変がいい", "B": "誰でも同じにできるよう決める"} }] },
+        { "name_jp": "慎重さ", "name_en": "Deliberative", "domain": "Executing", "summary": { "desc": "細心の注意を払い、リスクを想定して計画を進める。" }, "questions": [{ "text": "新しい話を聞くと？", "options": {"A": "期待する", "B": "落とし穴がないか警戒する"} }, { "text": "プライベートな話？", "options": {"A": "すぐ話す", "B": "警戒して話さない"} }, { "text": "決断するとき？", "options": {"A": "直感", "B": "リスクを徹底的に調べる"} }] },
+        { "name_jp": "規律性", "name_en": "Discipline", "domain": "Executing", "summary": { "desc": "秩序と計画を好み、物事を期限通りに進める。" }, "questions": [{ "text": "ぐちゃぐちゃな状況？", "options": {"A": "気にしない", "B": "整理整頓したくなる"} }, { "text": "予定通り進むと？", "options": {"A": "普通", "B": "快感を覚える"} }, { "text": "締め切り？", "options": {"A": "ギリギリ", "B": "計画的に進める"} }] },
+        { "name_jp": "目標志向", "name_en": "Focus", "domain": "Executing", "summary": { "desc": "明確な目的地を定め、そこに向かって集中し続ける。" }, "questions": [{ "text": "話が脱線したら？", "options": {"A": "楽しむ", "B": "ズレてると指摘したくなる"} }, { "text": "目標がない時間？", "options": {"A": "気楽", "B": "落ち着かない"} }, { "text": "別の面白そうなこと？", "options": {"A": "そっちやる", "B": "今のゴールまで後回し"} }] },
+        { "name_jp": "責任感", "name_en": "Responsibility", "domain": "Executing", "summary": { "desc": "一度約束したことは必ずやり遂げるという強い心理的拘束力を持つ。" }, "questions": [{ "text": "仕事が終わらない？", "options": {"A": "無理なものは無理", "B": "絶対やり遂げなきゃと焦る"} }, { "text": "約束を破ったら？", "options": {"A": "謝る", "B": "罪悪感で埋め合わせする"} }, { "text": "誰も見てないルール？", "options": {"A": "手抜くかも", "B": "必ず守る"} }] },
+        { "name_jp": "回復志向", "name_en": "Restorative", "domain": "Executing", "summary": { "desc": "問題を解決することに情熱を燃やし、正常な状態に戻す。" }, "questions": [{ "text": "好きな仕事？", "options": {"A": "伸ばす仕事", "B": "マイナスをゼロに戻す仕事"} }, { "text": "ミスを見つけたら？", "options": {"A": "スルー", "B": "直したくてウズウズする"} }, { "text": "過去の失敗？", "options": {"A": "忘れる", "B": "原因を分析する"} }] },
+        // --- 影響力 ---
+        { "name_jp": "活発性", "name_en": "Activator", "domain": "Influencing", "summary": { "desc": "思考よりも行動を重視し、まずはやってみることで事態を動かす。" }, "questions": [{ "text": "新しいこと？", "options": {"A": "調べてから", "B": "まずやってみる"} }, { "text": "長い議論？", "options": {"A": "大事", "B": "早く動こうぜとイライラ"} }, { "text": "説明書？", "options": {"A": "読む", "B": "いじりながら覚える"} }] },
+        { "name_jp": "指令性", "name_en": "Command", "domain": "Influencing", "summary": { "desc": "主導権を握り、明確な指示を出して人々を導く。" }, "questions": [{ "text": "意見の対立？", "options": {"A": "避けたい", "B": "ぶつけ合って解決したい"} }, { "text": "誰も決めない時？", "options": {"A": "待つ", "B": "私が決めると言う"} }, { "text": "耳の痛いこと？", "options": {"A": "言いにくい", "B": "はっきり言う"} }] },
+        { "name_jp": "コミュニケーション", "name_en": "Communication", "domain": "Influencing", "summary": { "desc": "言葉を使って人々を魅了し、メッセージを効果的に伝える。" }, "questions": [{ "text": "考えをまとめる時？", "options": {"A": "書く", "B": "話す"} }, { "text": "大勢の前でプレゼン？", "options": {"A": "嫌だ", "B": "ワクワクする"} }, { "text": "伝える時？", "options": {"A": "簡潔に", "B": "面白くストーリーで"} }] },
+        { "name_jp": "競争性", "name_en": "Competition", "domain": "Influencing", "summary": { "desc": "他者との比較において自分の進歩を測定し、勝利を渇望する。" }, "questions": [{ "text": "成功の基準？", "options": {"A": "昨日の自分", "B": "ライバルより上か"} }, { "text": "負けた時？", "options": {"A": "楽しければいい", "B": "悔しくてたまらない"} }, { "text": "作業中？", "options": {"A": "マイペース", "B": "隣の人より速くやりたい"} }] },
+        { "name_jp": "最上志向", "name_en": "Maximizer", "domain": "Influencing", "summary": { "desc": "平均ではなく卓越性を求め、強みを最大限に磨き上げる。" }, "questions": [{ "text": "時間を使うなら？", "options": {"A": "苦手の克服", "B": "得意を磨く"} }, { "text": "弱点修正？", "options": {"A": "必要", "B": "時間の無駄"} }, { "text": "仕上げ？", "options": {"A": "合格点でOK", "B": "納得いくまで磨く"} }] },
+        { "name_jp": "自己確信", "name_en": "Self-Assurance", "domain": "Influencing", "summary": { "desc": "自分の能力と判断力に絶対的な自信を持ち、リスクを恐れない。" }, "questions": [{ "text": "最後の決断？", "options": {"A": "データ", "B": "直感"} }, { "text": "反対されたら？", "options": {"A": "不安になる", "B": "自分は正しいと思う"} }, { "text": "リスクへの挑戦？", "options": {"A": "慎重に", "B": "なんとかなると飛び込む"} }] },
+        { "name_jp": "自我", "name_en": "Significance", "domain": "Influencing", "summary": { "desc": "他者から重要人物として認められ、大きな影響を与えたいと願う。" }, "questions": [{ "text": "やりがいは？", "options": {"A": "裏方の貢献", "B": "多くの人に認められること"} }, { "text": "スルーされたら？", "options": {"A": "気にしない", "B": "プライドが傷つく"} }, { "text": "役割？", "options": {"A": "縁の下", "B": "表舞台"} }] },
+        { "name_jp": "社交性", "name_en": "Woo", "domain": "Influencing", "summary": { "desc": "見知らぬ人と出会い、味方につけることに喜びを感じる。" }, "questions": [{ "text": "知らない人の会場？", "options": {"A": "不安", "B": "出会いがありそうでワクワク"} }, { "text": "初対面の会話？", "options": {"A": "疲れる", "B": "元気になる"} }, { "text": "交流会？", "options": {"A": "じっくり", "B": "たくさんの人と挨拶"} }] },
+        // --- 人間関係構築力 ---
+        { "name_jp": "適応性", "name_en": "Adaptability", "domain": "Relationship Building", "summary": { "desc": "流れに身を任せ、「今」この瞬間の変化に柔軟に対応する。" }, "questions": [{ "text": "将来の計画？", "options": {"A": "しっかり立てる", "B": "その時々で考える"} }, { "text": "予定が消えたら？", "options": {"A": "パニック", "B": "別のことしよう"} }, { "text": "仕事の進め方？", "options": {"A": "ルーチン", "B": "変化対応"} }] },
+        { "name_jp": "運命思考", "name_en": "Connectedness", "domain": "Relationship Building", "summary": { "desc": "あらゆる人や物事はつながっていると信じ、大きな視点を持つ。" }, "questions": [{ "text": "出来事は？", "options": {"A": "偶然", "B": "意味がある"} }, { "text": "ご縁？", "options": {"A": "たまたま", "B": "運命を感じる"} }, { "text": "親切？", "options": {"A": "ただの親切", "B": "巡り巡って返ってくる"} }] },
+        { "name_jp": "成長促進", "name_en": "Developer", "domain": "Relationship Building", "summary": { "desc": "他者の持つ可能性を見抜き、その成長を助けることに喜びを感じる。" }, "questions": [{ "text": "人を見る時？", "options": {"A": "今の実力", "B": "将来性"} }, { "text": "誰かの進歩？", "options": {"A": "まだ未熟", "B": "感動する"} }, { "text": "教え方？", "options": {"A": "手っ取り早く", "B": "気づくまで待つ"} }] },
+        { "name_jp": "共感性", "name_en": "Empathy", "domain": "Relationship Building", "summary": { "desc": "他者の感情を自分のことのように感じ取り、理解を示す。" }, "questions": [{ "text": "理解する時？", "options": {"A": "論理的に", "B": "感情になりきって"} }, { "text": "泣いている人？", "options": {"A": "客観視", "B": "自分も悲しくなる"} }, { "text": "相談？", "options": {"A": "解決策", "B": "気持ちに寄り添う"} }] },
+        { "name_jp": "調和性", "name_en": "Harmony", "domain": "Relationship Building", "summary": { "desc": "対立を避け、合意点を見つけることで場の平和を保つ。" }, "questions": [{ "text": "会議のゴール？", "options": {"A": "徹底議論", "B": "全員が納得する合意"} }, { "text": "怒鳴り合い？", "options": {"A": "活気がある", "B": "止めてほしい"} }, { "text": "対立？", "options": {"A": "主張する", "B": "妥協点を探す"} }] },
+        { "name_jp": "包含", "name_en": "Includer", "domain": "Relationship Building", "summary": { "desc": "誰も排除せず、輪を広げて受け入れようとする包容力を持つ。" }, "questions": [{ "text": "チーム作り？", "options": {"A": "少数精鋭", "B": "多くの人にチャンスを"} }, { "text": "輪に入れない人？", "options": {"A": "放置", "B": "声をかける"} }, { "text": "席が足りない？", "options": {"A": "断る", "B": "詰めて入れる"} }] },
+        { "name_jp": "個別化", "name_en": "Individualization", "domain": "Relationship Building", "summary": { "desc": "一人ひとりのユニークな個性を見抜き、カスタマイズした対応をする。" }, "questions": [{ "text": "評価？", "options": {"A": "共通点", "B": "その人だけの特徴"} }, { "text": "一括り？", "options": {"A": "普通", "B": "イラッとする"} }, { "text": "プレゼント？", "options": {"A": "定番", "B": "好みに合わせる"} }] },
+        { "name_jp": "ポジティブ", "name_en": "Positivity", "domain": "Relationship Building", "summary": { "desc": "楽観的で情熱があり、周囲を明るく元気づける。" }, "questions": [{ "text": "ピンチ？", "options": {"A": "備える", "B": "なんとかなる"} }, { "text": "暗い雰囲気？", "options": {"A": "仕方ない", "B": "笑わせたい"} }, { "text": "やる気？", "options": {"A": "指摘", "B": "褒める"} }] },
+        { "name_jp": "親密性", "name_en": "Relator", "domain": "Relationship Building", "summary": { "desc": "特定の人々と深く堅い信頼関係を築くことを好む。" }, "questions": [{ "text": "人間関係？", "options": {"A": "広く浅く", "B": "少人数と深く"} }, { "text": "プライベート？", "options": {"A": "話す", "B": "壁を作る"} }, { "text": "交流？", "options": {"A": "新しい人", "B": "いつものメンバー"} }] },
+        // --- 戦略的思考力 ---
+        { "name_jp": "分析思考", "name_en": "Analytical", "domain": "Strategic Thinking", "summary": { "desc": "データや事実に基づいて、物事の原因と結果を客観的に証明する。" }, "questions": [{ "text": "意見を聞くと？", "options": {"A": "共感", "B": "証拠はある？"} }, { "text": "データ説明？", "options": {"A": "冷たい", "B": "美しい"} }, { "text": "主張？", "options": {"A": "情熱", "B": "データ"} }] },
+        { "name_jp": "原点思考", "name_en": "Context", "domain": "Strategic Thinking", "summary": { "desc": "過去を振り返り、現在の状況がなぜこうなったのかを理解する。" }, "questions": [{ "text": "計画？", "options": {"A": "未来のビジョン", "B": "過去の成功例"} }, { "text": "歴史？", "options": {"A": "退屈", "B": "面白い"} }, { "text": "新しい環境？", "options": {"A": "目標設定", "B": "背景調査"} }] },
+        { "name_jp": "未来志向", "name_en": "Futuristic", "domain": "Strategic Thinking", "summary": { "desc": "未来の可能性を鮮明にイメージし、周囲に希望を与える。" }, "questions": [{ "text": "思考？", "options": {"A": "今・過去", "B": "10年後"} }, { "text": "未来の話？", "options": {"A": "冷める", "B": "ワクワク"} }, { "text": "壁？", "options": {"A": "足元を見る", "B": "成功イメージを見る"} }] },
+        { "name_jp": "着想", "name_en": "Ideation", "domain": "Strategic Thinking", "summary": { "desc": "一見関係ない事象を結びつけ、新しいアイデアを生み出す。" }, "questions": [{ "text": "解決法？", "options": {"A": "確実な方法", "B": "斬新な方法"} }, { "text": "アイデア出し？", "options": {"A": "疲れる", "B": "楽しい"} }, { "text": "繋がり？", "options": {"A": "ない", "B": "面白がる"} }] },
+        { "name_jp": "収集心", "name_en": "Input", "domain": "Strategic Thinking", "summary": { "desc": "好奇心旺盛で、情報や知識を収集・蓄積することに喜びを感じる。" }, "questions": [{ "text": "知らない言葉？", "options": {"A": "スルー", "B": "ググる"} }, { "text": "ネット？", "options": {"A": "早く終わりたい", "B": "知識が増えて快感"} }, { "text": "本？", "options": {"A": "捨てる", "B": "溜め込む"} }] },
+        { "name_jp": "内省", "name_en": "Intellection", "domain": "Strategic Thinking", "summary": { "desc": "一人で深く考え、物事の本質を探求することを好む。" }, "questions": [{ "text": "考えること？", "options": {"A": "準備", "B": "遊び"} }, { "text": "一人の時間？", "options": {"A": "寂しい", "B": "必須"} }, { "text": "哲学議論？", "options": {"A": "避ける", "B": "喜ぶ"} }] },
+        { "name_jp": "学習欲", "name_en": "Learner", "domain": "Strategic Thinking", "summary": { "desc": "学ぶプロセスそのものを楽しみ、常に向上しようとする。" }, "questions": [{ "text": "新しいこと？", "options": {"A": "結果", "B": "過程"} }, { "text": "知らない分野？", "options": {"A": "興味ない", "B": "ワクワク"} }, { "text": "十分なら？", "options": {"A": "楽したい", "B": "学び続けたい"} }] },
+        { "name_jp": "戦略性", "name_en": "Strategic", "domain": "Strategic Thinking", "summary": { "desc": "複雑な状況からパターンを見出し、目的に至る最適なルートを見つける。" }, "questions": [{ "text": "迷路？", "options": {"A": "一つずつ", "B": "空から見る"} }, { "text": "プランB？", "options": {"A": "面倒", "B": "安心する"} }, { "text": "行き詰まり？", "options": {"A": "粘る", "B": "別ルート"} }] }
+      ]
+    };
+
+    let allQuestions = [];
+    let currentQuestionIndex = 0;
+    let scores = {}; 
+    let perfectCounts = {}; 
+    let historyStack = [];
+    let currentMode = 'precision';
+
+    const startScreen = document.getElementById('start-screen');
+    const quizScreen = document.getElementById('quiz-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const btnBack = document.getElementById('btn-back');
+    
+    function startQuiz(mode) {
+        currentMode = mode;
+        prepareQuestions(mode);
+        currentQuestionIndex = 0;
+        startScreen.classList.add('hidden');
+        quizScreen.classList.remove('hidden');
+        renderQuestion();
+    }
+
+    function prepareQuestions(mode) {
+        allQuestions = [];
+        scores = {};
+        perfectCounts = {};
+        historyStack = [];
+        diagnosisData.themes.forEach(theme => {
+            scores[theme.name_jp] = 0;
+            perfectCounts[theme.name_jp] = 0;
+            if(theme.questions) {
+                let questionsToAdd = [];
+                if (mode === 'simple') {
+                    const randomIndex = Math.floor(Math.random() * theme.questions.length);
+                    questionsToAdd.push(theme.questions[randomIndex]);
+                } else {
+                    questionsToAdd = theme.questions;
+                }
+                questionsToAdd.forEach(q => {
+                    allQuestions.push({
+                        theme: theme.name_jp,
+                        name_en: theme.name_en,
+                        type: "Q",
+                        text: q.text,
+                        options: q.options
+                    });
+                });
+            }
+        });
+        
+        for (let i = allQuestions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+        }
+    }
+
+    function renderQuestion() {
+        if (currentQuestionIndex >= allQuestions.length) {
+            showResult();
+            return;
+        }
+        const q = allQuestions[currentQuestionIndex];
+        
+        if (currentQuestionIndex > 0) btnBack.classList.remove('hidden'); 
+        else btnBack.classList.add('hidden');
+
+        document.getElementById('question-text').textContent = q.text;
+        document.getElementById('text-a').textContent = q.options.A;
+        document.getElementById('text-b').textContent = q.options.B;
+
+        const progress = ((currentQuestionIndex) / allQuestions.length) * 100;
+        document.getElementById('progress-bar').style.width = `${progress}%`;
+        document.getElementById('progress-text').textContent = `${currentQuestionIndex + 1} / ${allQuestions.length}`;
+        
+        window.scrollTo(0, 0);
+    }
+
+    function handleAnswer(scaleValue) {
+        const q = allQuestions[currentQuestionIndex];
+        let points = 0;
+        switch(scaleValue) {
+            case 1: points = 0; break;
+            case 2: points = 5; break;
+            case 3: points = 10; break;
+            case 4: points = 20; break;
+            case 5: 
+                points = 30; 
+                perfectCounts[q.theme]++; 
+                break;
+        }
+        
+        scores[q.theme] += points;
+        historyStack.push({ theme: q.theme, points: points, isPerfect: (scaleValue === 5) });
+        currentQuestionIndex++;
+        setTimeout(renderQuestion, 150);
+    }
+
+    function goBack() {
+        if (currentQuestionIndex === 0 || historyStack.length === 0) return;
+        currentQuestionIndex--;
+        const lastAction = historyStack.pop();
+        if (lastAction) { 
+            scores[lastAction.theme] -= lastAction.points; 
+            if(lastAction.isPerfect) perfectCounts[lastAction.theme]--;
+        }
+        renderQuestion();
+    }
+
+    // ▼▼▼ 結果表示とAI呼び出し ▼▼▼
+    function showResult() {
+        quizScreen.classList.add('hidden');
+        resultScreen.classList.remove('hidden');
+        btnBack.classList.add('hidden');
+
+        // ソートロジック
+        const sortedScores = Object.entries(scores).sort((a, b) => {
+            if (b[1] !== a[1]) return b[1] - a[1];
+            return perfectCounts[b[0]] - perfectCounts[a[0]];
+        });
+
+        // グラフとリストの描画（既存ロジック）
+        drawRankList(sortedScores);
+        drawBalanceBar(sortedScores);
+        drawRadarChart(sortedScores);
+
+        // ★★★ ここでDify AIを呼び出す ★★★
+        const top5 = sortedScores.slice(0, 5).map(i => i[0]).join(', ');
+        const bottom5 = sortedScores.slice(-5).reverse().map(i => i[0]).join(', '); // 下位は逆順にして「ワースト1」から並べる
+        
+        startDifySession(top5, bottom5);
+    }
+
+    function drawRankList(sortedScores) {
+        const listContainer = document.getElementById('full-rank-list');
+        listContainer.innerHTML = '';
+        const domainColors = { "Executing": "var(--executing)", "Influencing": "var(--influencing)", "Relationship Building": "var(--relationship)", "Strategic Thinking": "var(--strategic)" };
+
+        sortedScores.forEach((item, index) => {
+            const themeName = item[0];
+            const themeInfo = diagnosisData.themes.find(t => t.name_jp === themeName);
+            const rank = index + 1;
+            let rowClass = "rank-item";
+            if(rank <= 5) rowClass += " top5";
+            if(rank >= 30) rowClass += " bottom5";
+
+            const li = document.createElement('li');
+            li.className = rowClass;
+            li.innerHTML = `
+                <div class="rank-main-row">
+                    <div style="display:flex; align-items:center;">
+                        <span class="rank-num">${rank}</span>
+                        <span class="rank-name">
+                            <span class="domain-tag" style="background:${domainColors[themeInfo.domain]}">${themeInfo.domain}</span>
+                            ${themeName} <small>${themeInfo.name_en}</small>
+                        </span>
+                    </div>
+                </div>
+                <div class="rank-desc">${themeInfo.summary.desc}</div>
+            `;
+            listContainer.appendChild(li);
+        });
+    }
+
+    function drawBalanceBar(sortedScores) {
+        const domainScores = { "Executing": 0, "Influencing": 0, "Relationship Building": 0, "Strategic Thinking": 0 };
+        sortedScores.forEach(item => {
+            const theme = diagnosisData.themes.find(t => t.name_jp === item[0]);
+            if(theme) domainScores[theme.domain] += item[1];
+        });
+
+        const totalScore = Object.values(domainScores).reduce((a,b)=>a+b, 0);
+        const barContainer = document.getElementById('balance-bar-container');
+        barContainer.innerHTML = '';
+        const domainColors = { "Executing": "var(--executing)", "Influencing": "var(--influencing)", "Relationship Building": "var(--relationship)", "Strategic Thinking": "var(--strategic)" };
+        
+        Object.entries(domainScores)
+            .sort((a,b) => b[1] - a[1])
+            .forEach(([domain, score]) => {
+                if(score > 0) {
+                    const width = (score / totalScore) * 100;
+                    const div = document.createElement('div');
+                    div.style.width = `${width}%`;
+                    div.style.backgroundColor = domainColors[domain];
+                    div.className = 'balance-bar';
+                    barContainer.appendChild(div);
+                }
+            });
+    }
+
+    function drawRadarChart(sortedScores) {
+        const container = document.getElementById('radar-chart-container');
+        const domainScores = { "Executing": 0, "Influencing": 0, "Relationship Building": 0, "Strategic Thinking": 0 };
+        const domainCounts = { "Executing": 0, "Influencing": 0, "Relationship Building": 0, "Strategic Thinking": 0 };
+
+        diagnosisData.themes.forEach(t => domainCounts[t.domain]++);
+        sortedScores.forEach(item => {
+            const theme = diagnosisData.themes.find(t => t.name_jp === item[0]);
+            if(theme) domainScores[theme.domain] += item[1];
+        });
+
+        const multiplier = currentMode === 'simple' ? 30 : 90;
+        const percentages = {
+            "Executing": (domainScores["Executing"] / (domainCounts["Executing"] * multiplier)) * 100,
+            "Influencing": (domainScores["Influencing"] / (domainCounts["Influencing"] * multiplier)) * 100,
+            "Relationship Building": (domainScores["Relationship Building"] / (domainCounts["Relationship Building"] * multiplier)) * 100,
+            "Strategic Thinking": (domainScores["Strategic Thinking"] / (domainCounts["Strategic Thinking"] * multiplier)) * 100
+        };
+
+        for (let key in percentages) if (percentages[key] > 100) percentages[key] = 100;
+
+        const size = 200;
+        const center = size / 2;
+        const radius = 80;
+        
+        const getCoords = (domain, pct) => {
+            const ratio = pct / 100;
+            const r = radius * ratio;
+            switch(domain) {
+                case 'Executing': return [center, center - r];
+                case 'Influencing': return [center + r, center];
+                case 'Relationship Building': return [center, center + r];
+                case 'Strategic Thinking': return [center - r, center];
+            }
+        };
+
+        const pEx = getCoords('Executing', percentages['Executing']);
+        const pInf = getCoords('Influencing', percentages['Influencing']);
+        const pRel = getCoords('Relationship Building', percentages['Relationship Building']);
+        const pStr = getCoords('Strategic Thinking', percentages['Strategic Thinking']);
+
+        const polyPoints = `${pEx[0]},${pEx[1]} ${pInf[0]},${pInf[1]} ${pRel[0]},${pRel[1]} ${pStr[0]},${pStr[1]}`;
+
+        let gridSVG = '';
+        [0.25, 0.5, 0.75, 1].forEach(ratio => {
+            const r = radius * ratio;
+            gridSVG += `<polygon points="${center},${center-r} ${center+r},${center} ${center},${center+r} ${center-r},${center}" fill="none" stroke="#ddd" stroke-width="1" />`;
+        });
+
+        const svgContent = `
+            <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+                ${gridSVG}
+                <line x1="${center}" y1="${center-radius}" x2="${center}" y2="${center+radius}" stroke="#eee" stroke-width="1" />
+                <line x1="${center-radius}" y1="${center}" x2="${center+radius}" y2="${center}" stroke="#eee" stroke-width="1" />
+                <polygon points="${polyPoints}" fill="rgba(39, 174, 96, 0.5)" stroke="#27ae60" stroke-width="2" class="radar-polygon" />
+                <text x="${center}" y="15" text-anchor="middle" font-size="10" fill="#8e44ad" font-weight="bold">実行力</text>
+                <text x="${size-5}" y="${center+4}" text-anchor="end" font-size="10" fill="#d35400" font-weight="bold">影響力</text>
+                <text x="${center}" y="${size-5}" text-anchor="middle" font-size="10" fill="#2980b9" font-weight="bold">人間関係</text>
+                <text x="5" y="${center+4}" text-anchor="start" font-size="10" fill="#27ae60" font-weight="bold">戦略</text>
+            </svg>
+        `;
+        container.innerHTML = svgContent;
+    }
+
+    // ==========================================
+    // ▼▼▼ Dify API 連携ロジック ▼▼▼
+    // ==========================================
+
+    async function startDifySession(top5, bottom5) {
+        if (!DIFY_API_KEY || DIFY_API_KEY.length < 10) {
+            addMessageToChat("system", "⚠️ APIキーが設定されていません。コード内の `DIFY_API_KEY` を設定してください。");
+            return;
+        }
+
+        const loader = document.getElementById('loading-indicator');
+        loader.style.display = 'block';
+
+        // 診断結果をinputsとして渡す
+        const payload = {
+            inputs: {
+                "top_5": top5,
+                "bottom_5": bottom5
+            },
+            query: "診断をお願いします", // 初回のトリガーメッセージ
+            response_mode: "blocking",
+            user: userId,
+            auto_generate_name: false
+        };
+
+        try {
+            const response = await fetch(`${DIFY_BASE_URL}/chat-messages`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${DIFY_API_KEY}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "API Error");
+            }
+
+            // 会話IDを保存（これで会話がつながる）
+            conversationId = data.conversation_id;
+
+            // AIの回答を表示
+            addMessageToChat("ai", data.answer);
+
+            // 入力欄を有効化
+            enableChatInput();
+
+        } catch (error) {
+            console.error(error);
+            addMessageToChat("system", "エラーが発生しました: " + error.message);
+        } finally {
+            loader.style.display = 'none';
+        }
+    }
+
+    async function sendUserMessage() {
+        const input = document.getElementById('user-input');
+        const text = input.value.trim();
+        if (!text) return;
+
+        // ユーザーのメッセージを表示
+        addMessageToChat("user", text);
+        input.value = "";
+        
+        // 入力不可にする
+        disableChatInput();
+        const loader = document.getElementById('loading-indicator');
+        loader.style.display = 'block';
+        loader.innerHTML = "AIが考え中... 🤔";
+
+        const payload = {
+            inputs: {}, // 2回目以降はinputs不要
+            query: text,
+            response_mode: "blocking",
+            user: userId,
+            conversation_id: conversationId // 前回のIDを引き継ぐ
+        };
+
+        try {
+            const response = await fetch(`${DIFY_BASE_URL}/chat-messages`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${DIFY_API_KEY}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message);
+
+            addMessageToChat("ai", data.answer);
+
+        } catch (error) {
+            addMessageToChat("system", "エラー: " + error.message);
+        } finally {
+            loader.style.display = 'none';
+            enableChatInput();
+        }
+    }
+
+    function addMessageToChat(role, text) {
+        const historyDiv = document.getElementById('chat-history');
+        const msgDiv = document.createElement('div');
+        
+        msgDiv.className = `message message-${role}`;
+        
+        // Markdownっぽい太字記法 (**text**) を HTMLの <b> に簡易変換
+        let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+        
+        // 改行コードを <br> に変換しない（CSSで white-space: pre-wrap を指定しているので不要だが念のため）
+        // formattedText = formattedText.replace(/\n/g, '<br>');
+
+        msgDiv.innerHTML = formattedText;
+        historyDiv.appendChild(msgDiv);
+        
+        // スクロールを一番下へ
+        historyDiv.scrollTop = historyDiv.scrollHeight;
+    }
+
+    function enableChatInput() {
+        document.getElementById('user-input').disabled = false;
+        document.getElementById('btn-send').disabled = false;
+        document.getElementById('user-input').focus();
+    }
+
+    function disableChatInput() {
+        document.getElementById('user-input').disabled = true;
+        document.getElementById('btn-send').disabled = true;
+    }
+
+    // Enterキーで送信
+    document.getElementById('user-input').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            sendUserMessage();
+        }
+    });
+</script>
+
+</body>
+</html>
