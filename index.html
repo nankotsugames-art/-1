@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NANKOTSU Strength Lab. (Pro Edition)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #27ae60;
+            --sub-color: #e74c3c;
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            /* 4領域の色 */
+            --executing: #8e44ad;
+            --influencing: #d35400;
+            --relationship: #2980b9;
+            --strategic: #27ae60;
+        }
+
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: "Noto Sans JP", "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            background: white;
+            width: 100%;
+            max-width: 800px;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ヘッダー周り */
+        .coach-header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            position: relative;
+        }
+        .coach-title { 
+            font-size: 12px; 
+            color: #aaa; 
+            font-weight: bold; 
+            letter-spacing: 2px; 
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        h1 { 
+            font-size: 26px; 
+            color: var(--primary-color); 
+            margin: 0; 
+            font-weight: 700;
+        }
+
+        .btn-back {
+            position: absolute; top: 0; left: 0; background: none; border: none;
+            color: #999; font-size: 14px; cursor: pointer; padding: 10px; z-index: 10;
+        }
+
+        /* 質問画面のデザイン強化 */
+        .question-card {
+            background: #fff;
+            padding: 10px 0;
+        }
+        .question-statement { 
+            font-size: 1.1em; 
+            font-weight: bold; 
+            text-align: center; 
+            margin-bottom: 30px; 
+            color: #777;
+            min-height: 1.5em;
+        }
+
+        .choices-wrapper { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 30px; 
+            gap: 20px; 
+            align-items: stretch;
+        }
+        
+        @media (max-width: 600px) {
+            .choices-wrapper { flex-direction: column; gap: 15px; }
+            .container { padding: 25px 20px; }
+        }
+
+        .choice-box { 
+            width: 100%; 
+            padding: 25px 20px; 
+            border-radius: 12px; 
+            background: #f8f9fa; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center;
+            align-items: center; 
+            text-align: center;
+            font-size: 1.05em; 
+            font-weight: 500; 
+            color: #444; 
+            border: 2px solid transparent; 
+            transition: all 0.3s;
+            line-height: 1.5;
+        }
+        
+        .box-a { border-bottom: 4px solid var(--sub-color); }
+        .box-b { border-bottom: 4px solid var(--accent-color); }
+
+        /* スケールボタン */
+        .scale-container { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 12px; 
+            margin: 30px 0; 
+        }
+        .scale-btn { 
+            width: 48px; height: 48px; 
+            border-radius: 50%; 
+            border: 1px solid #e0e0e0; 
+            background: white; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-weight: bold; 
+            color: #999; 
+            font-size: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: relative;
+        }
+        .scale-btn.large { width: 62px; height: 62px; font-size: 16px; color: #555; border-width: 2px; }
+        .scale-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        .btn-color-a { color: var(--sub-color); border-color: rgba(231, 76, 60, 0.3); }
+        .btn-color-b { color: var(--accent-color); border-color: rgba(39, 174, 96, 0.3); }
+
+        .btn-color-a:hover, .btn-color-a:active { background-color: var(--sub-color); color: white; border-color: var(--sub-color); }
+        .btn-color-b:hover, .btn-color-b:active { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
+        
+        .scale-label {
+            position: absolute;
+            bottom: -25px;
+            font-size: 10px;
+            color: #aaa;
+            white-space: nowrap;
+        }
+
+        /* プログレスバー */
+        .progress-section { margin-top: 40px; text-align: right; }
+        .progress-bar-bg { width: 100%; height: 6px; background: #eee; border-radius: 3px; overflow: hidden; margin-top: 5px; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--sub-color), var(--accent-color)); width: 0%; transition: width 0.3s ease-out; }
+
+        /* スタート画面 */
+        .start-btn-group { display: flex; flex-direction: column; gap: 15px; margin-top: 30px; align-items: center; }
+        .btn-mode { 
+            padding: 18px 30px; 
+            border-radius: 50px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            width: 100%; 
+            max-width: 380px; 
+            border: none; 
+            transition: all 0.2s; 
+            position: relative;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn-mode span { text-align: left; }
+        .btn-mode small { font-size: 0.8em; opacity: 0.8; font-weight: normal; }
+
+        .btn-simple { background: #fff; border: 2px solid #8e44ad; color: #8e44ad; }
+        .btn-simple:hover { background: #fdf5ff; }
+        
+        .btn-precision { background: #8e44ad; color: white; box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3); }
+        .btn-precision:hover { background: #7d3c98; transform: translateY(-2px); }
+
+        .btn-super { 
+            background: linear-gradient(135deg, #2c3e50, #000); 
+            color: white; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border: 1px solid #333;
+        }
+        .btn-super:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+            background: linear-gradient(135deg, #34495e, #111); 
+        }
+        .btn-super::after {
+            content: "RECOMMENDED";
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        /* 結果レポート画面 */
+        .report-section { margin-bottom: 50px; animation: fadeIn 0.8s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .report-header { text-align: center; margin-bottom: 30px; }
+        .report-title-main { font-size: 1.5em; font-weight: bold; color: var(--primary-color); display: inline-block; padding-bottom: 10px; border-bottom: 3px solid var(--accent-color); }
+
+        /* AI分析レポートのデザイン */
+        .ai-report-card {
+            background: #fff;
+            border: 1px solid #eef2f5;
+            border-radius: 16px;
+            padding: 30px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            position: relative;
+            text-align: left;
+        }
+        .ai-report-card::before {
+            content: "AI STRENGTH ANALYSIS";
+            position: absolute;
+            top: -12px;
+            left: 30px;
+            background: var(--primary-color);
+            color: white;
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            letter-spacing: 1px;
+        }
+        .ai-content { font-size: 1em; line-height: 1.8; color: #444; white-space: pre-wrap; }
+        .ai-content h2 { font-size: 1.2em; color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 25px; }
+        .ai-content strong { color: #000; background: linear-gradient(transparent 70%, #a8e6cf 70%); }
+
+        /* ローディング画面 */
+        .analyzing-overlay {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+            background: #fbfbfb;
+            border-radius: 16px;
+            margin: 20px 0;
+            border: 1px dashed #ddd;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid #eee;
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* ランキングリスト */
+        .rank-list { list-style: none; padding: 0; margin: 0; }
+        .rank-item { padding: 15px 20px; border-bottom: 1px solid #f0f0f0; display: flex; flex-direction: column; page-break-inside: avoid; }
+        .rank-item.top5 { background: #fdfdfd; border-left: 4px solid var(--accent-color); }
+        .rank-header-row { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+        .rank-num { font-weight: bold; color: #ccc; width: 30px; }
+        .top5 .rank-num { color: var(--accent-color); font-size: 1.2em; }
+        .rank-name { font-weight: bold; color: var(--primary-color); font-size: 1.05em; margin-right: 10px; }
+        .score-pill { font-size: 0.75em; background: #eee; color: #666; padding: 2px 8px; border-radius: 10px; font-weight: bold; margin-right: 10px; }
+        .domain-badge { font-size: 10px; padding: 2px 6px; border-radius: 3px; color: white; opacity: 0.8; white-space: nowrap; }
+        .rank-desc-row { margin-top: 6px; padding-left: 30px; font-size: 0.85em; color: #777; line-height: 1.4; }
+
+        .hidden { display: none !important; }
+
+        /* レーダーチャート */
+        #radar-chart-container { margin: 20px auto; width: 100%; max-width: 380px; height: auto; }
+        .balance-bar-container { display: flex; height: 12px; width: 100%; border-radius: 6px; overflow: hidden; margin: 15px 0; background: #eee; }
+        .balance-bar { height: 100%; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .legend-container { display: flex; justify-content: center; gap: 15px; font-size: 11px; color: #888; flex-wrap: wrap; margin-bottom: 20px;}
+        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+        .restore-notice { background-color: #e8f5e9; color: #27ae60; padding: 10px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-size: 0.9em; font-weight: bold; }
+
+        @media print {
+            body { background: #fff; padding: 0; margin: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .container { box-shadow: none; border: none; width: 100%; max-width: 100%; padding: 0; }
+            .coach-header button, .start-btn-group, .btn-mode, .scale-container, #analyzing-overlay, .progress-section, #start-screen p, #reset-btn-area { display: none !important; }
+            #start-screen, #quiz-screen { display: none !important; }
+            #result-screen { display: block !important; }
+            svg { max-width: 100%; height: auto; }
+            .ai-report-card { border: 1px solid #ddd; box-shadow: none; break-inside: avoid; }
+            .report-title-main { border-bottom: 2px solid var(--accent-color); }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="coach-header">
+        <button id="btn-back" class="btn-back hidden" onclick="goBack()">← 戻る</button>
+        <div class="coach-title">STRENGTHS LAB.</div>
+        <h1 id="page-title">才能の源泉診断</h1>
+    </div>
+
+    <div id="start-screen">
+        <div id="restore-msg" class="restore-notice hidden">
+            前回の中断データから再開しました
+        </div>
+
+        <div style="text-align: center; margin-bottom: 30px; color: #555; font-size: 0.95em;">
+            あなたの無意識の思考パターンにおける「葛藤」を分析します。<br>
+            より直感的に、自分らしいと感じる方を選んでください。
+        </div>
+        
+        <div class="start-btn-group">
+            <button class="btn-mode btn-simple" onclick="startQuiz('simple')">
+                <span>⚡️ クイック診断</span>
+                <small>34問 / 5分</small>
+            </button>
+            <button class="btn-mode btn-precision" onclick="startQuiz('precision')">
+                <span>🔍 精密分析診断</span>
+                <small>102問 / 15分</small>
+            </button>
+            <button class="btn-mode btn-super" onclick="startQuiz('super_precision')">
+                <span>🧬 超精密プロ診断</span>
+                <small>177問 / 30分</small>
+            </button>
+        </div>
+        <p style="text-align:center; font-size:11px; color:#aaa; margin-top:20px;">※本家と同様の177問フルセットで診断可能です</p>
+    </div>
+
+    <div id="quiz-screen" class="hidden">
+        <div class="question-card">
+            <div style="text-align:center; margin-bottom:15px; font-size:0.85em; color:#999; letter-spacing:1px;">DO YOU TEND TO...</div>
+            
+            <div class="choices-wrapper">
+                <div class="choice-box box-a">
+                    <span id="text-a">Aの選択肢</span>
+                </div>
+                
+                <div class="choice-box box-b">
+                    <span id="text-b">Bの選択肢</span>
+                </div>
+            </div>
+
+            <div class="scale-container">
+                <button class="scale-btn large btn-color-a" onclick="handleAnswer(1)">
+                    A<span class="scale-label">強くそう</span>
+                </button>
+                <button class="scale-btn scale-btn btn-color-a" onclick="handleAnswer(2)">
+                    A的<span class="scale-label">ややそう</span>
+                </button>
+                <button class="scale-btn scale-btn" onclick="handleAnswer(3)">
+                    -<span class="scale-label">中立</span>
+                </button>
+                <button class="scale-btn scale-btn btn-color-b" onclick="handleAnswer(4)">
+                    B的<span class="scale-label">ややそう</span>
+                </button>
+                <button class="scale-btn large btn-color-b" onclick="handleAnswer(5)">
+                    B<span class="scale-label">強くそう</span>
+                </button>
+            </div>
+            
+            <div style="text-align:center; font-size:11px; color:#ccc; margin-top:30px;">
+                あまり考え込まず、直感で選んでください
+            </div>
+
+            <div class="progress-section">
+                <div class="progress-bar-bg">
+                    <div id="progress-bar" class="progress-bar-fill"></div>
+                </div>
+                <div style="font-size:11px; color:#aaa; margin-top:5px;">
+                    Progress: <span id="progress-text">0 / 0</span>
+                </div>
+            </div>
+            
+            <div style="text-align:center; margin-top:20px;">
+                 <button onclick="resetDiagnosis()" style="background:none; border:none; color:#ccc; font-size:11px; cursor:pointer; text-decoration:underline;">最初からやり直す</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-screen" class="hidden">
+        
+        <div class="report-section">
+            <div class="report-header">
+                <div class="report-title-main">ANALYSIS REPORT</div>
+                <p style="font-size:0.9em; color:#777; margin-top:10px;">あなたの資質構成に基づく特別分析</p>
+            </div>
+
+            <div style="text-align:center; margin-bottom:20px;">
+                <button class="btn-mode btn-simple" style="padding: 10px 20px; font-size:14px; max-width:250px; justify-content:center;" onclick="window.print()">
+                    📄 レポートを保存 (PDF/印刷)
+                </button>
+            </div>
+
+            <div id="analyzing-overlay" class="analyzing-overlay">
+                <div class="spinner"></div>
+                <div id="loading-msg" class="loading-text">思考パターンを照合中...</div>
+            </div>
+
+            <div id="ai-report-content" class="ai-report-card hidden">
+                <div id="ai-text" class="ai-content"></div>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h3 style="font-size:1.1em; color:#555; border-left:4px solid #ddd; padding-left:10px; margin-bottom:20px;">資質バランスチャート</h3>
+            <div id="radar-chart-container"></div>
+            <div class="balance-bar-container" id="balance-bar-container"></div>
+            <div class="legend-container">
+                <span><span class="dot" style="background:var(--executing)"></span>実行力</span>
+                <span><span class="dot" style="background:var(--influencing)"></span>影響力</span>
+                <span><span class="dot" style="background:var(--relationship)"></span>人間関係</span>
+                <span><span class="dot" style="background:var(--strategic)"></span>戦略的思考</span>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h3 style="font-size:1.1em; color:#555; border-left:4px solid #ddd; padding-left:10px; margin-bottom:20px;">全34資質の構成順位</h3>
+            <ul id="full-rank-list" class="rank-list"></ul>
+        </div>
+
+        <div id="reset-btn-area" style="text-align:center; margin-top:40px; display:flex; flex-direction:column; align-items:center; gap:15px;">
+            <button class="btn-mode btn-simple" onclick="resetDiagnosis()" style="background:#f4f4f4; border:none; color:#888; justify-content:center;">トップに戻る</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const DIFY_API_KEY = "app-m83jKdkjZkNWiNjMzuHeBcD8"; 
+    const DIFY_BASE_URL = "https://api.dify.ai/v1";
+    const STORAGE_KEY = 'nankotsu_diagnosis_pro_v1';
+    let userId = "user_" + Math.random().toString(36).substr(2, 9);
+
+    /* 【質問データ構造】
+      各テーマごとに5〜6問の「A vs B」形式の質問を設定。
+      合計177問になるように調整済み。
+      翻訳調を避け、日常のジレンマや思考の癖として記述。
+    */
+    const diagnosisData = {
+      "themes": [
+        // --- 実行力 (Executing) ---
+        { "name_jp": "達成欲", "name_en": "Achiever", "domain": "Executing", "summary": { "desc": "並外れたスタミナで、毎日何かを成し遂げないと気が済まない。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "休日でも「何か生産的なことをした」と思いたい", "B": "休日は完全にスイッチを切ってダラダラしたい"} },
+            { "text": "", "options": {"A": "忙しすぎて休む暇がない時ほど燃える", "B": "余裕を持ってゆったり過ごせる時が幸せだ"} },
+            { "text": "", "options": {"A": "1日の終わりに「今日はこれを完了した」と確認して眠りたい", "B": "1日の終わりに「今日は楽しかった」と感じて眠りたい"} },
+            { "text": "", "options": {"A": "TO-DOリストの項目を消していく瞬間に快感を覚える", "B": "リストに縛られず、気ままに行動するのが好きだ"} },
+            { "text": "", "options": {"A": "目標を達成しても、すぐに次の高い目標を立てる", "B": "目標を達成したら、しばらくはその余韻に浸って休む"} }
+        ]},
+        { "name_jp": "アレンジ", "name_en": "Arranger", "domain": "Executing", "summary": { "desc": "多くの要素を整理し、最も効率的な構成を柔軟に組み立てる。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "計画通りに進まない時、すぐに別の手を考えるのが得意だ", "B": "計画通りに進まない時、元の計画に戻そうと努力する"} },
+            { "text": "", "options": {"A": "複雑な状況をごちゃ混ぜにして、最適解を見つけるパズルが好きだ", "B": "複雑な状況は整理されるまで手をつけたくない"} },
+            { "text": "", "options": {"A": "「もっと効率的なやり方があるはずだ」と常に考えている", "B": "「今のやり方が一番確実だ」と既存の方法を守る"} },
+            { "text": "", "options": {"A": "旅行のスケジュールは、状況に合わせて柔軟に変更したい", "B": "旅行のスケジュールは、事前に分刻みで決めておきたい"} },
+            { "text": "", "options": {"A": "同時に複数のプロジェクトを回すジャグリングのような状態が好き", "B": "一つのことに集中して、終わってから次に行きたい"} }
+        ]},
+        { "name_jp": "信念", "name_en": "Belief", "domain": "Executing", "summary": { "desc": "確固たる不変の価値観を持ち、それに基づいて行動する。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "給料が良くても、自分の価値観に反する仕事はできない", "B": "仕事は仕事と割り切り、条件が良いなら受け入れる"} },
+            { "text": "", "options": {"A": "家族や社会に対する責任や義務を何より重んじる", "B": "個人の自由や楽しさを何より優先したい"} },
+            { "text": "", "options": {"A": "他人の意見よりも、自分の内なる道徳心に従って決める", "B": "状況や周りの意見に合わせて柔軟に判断を変える"} },
+            { "text": "", "options": {"A": "一度信じたことは、どんなに批判されても貫き通す", "B": "批判されたり状況が変われば、考えを修正する"} },
+            { "text": "", "options": {"A": "お金や地位よりも、精神的な充足や意義が大切だ", "B": "精神論よりも、現実的な利益や成果が大切だ"} }
+        ]},
+        { "name_jp": "公平性", "name_en": "Consistency", "domain": "Executing", "summary": { "desc": "バランスを重視し、すべての人を平等に扱うことで秩序を保つ。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "特定の人を特別扱いすることに強い不快感を覚える", "B": "事情があるなら、特定の人を特別扱いしても良いと思う"} },
+            { "text": "", "options": {"A": "誰に対しても同じルール、同じ基準で接するべきだ", "B": "相手の個性や状況に合わせて、対応を柔軟に変えるべきだ"} },
+            { "text": "", "options": {"A": "予測可能で、一貫性のある環境で働くのが好きだ", "B": "毎日何が起こるかわからない変化のある環境が好きだ"} },
+            { "text": "", "options": {"A": "手順やマニュアルが整備されていると安心する", "B": "マニュアルに縛られず、自由にやらせてほしい"} },
+            { "text": "", "options": {"A": "えこひいきや不正を見ると、黙っていられない", "B": "世の中には不公平なこともあると受け流せる"} }
+        ]},
+        { "name_jp": "慎重さ", "name_en": "Deliberative", "domain": "Executing", "summary": { "desc": "細心の注意を払い、リスクを想定して計画を進める。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "うまい話を聞いた時、まず「裏があるのでは」と疑う", "B": "うまい話を聞いた時、すぐに「面白そうだ」と飛びつく"} },
+            { "text": "", "options": {"A": "決断を下す前に、あらゆるリスクや障害を想定する", "B": "まずは行動してみて、問題が起きたらその時考える"} },
+            { "text": "", "options": {"A": "プライベートなことは、本当に信頼できる少数の人にしか話さない", "B": "自分のことは誰にでもオープンに話すほうだ"} },
+            { "text": "", "options": {"A": "友人選びには時間をかけ、慎重に見極める", "B": "会ったその日にすぐ友達になれる"} },
+            { "text": "", "options": {"A": "「石橋を叩いて渡る（あるいは渡らない）」タイプだ", "B": "「当たって砕けろ」タイプだ"} },
+            { "text": "", "options": {"A": "事前に準備ができていないと不安でたまらない", "B": "準備不足でも、その場の即興でなんとかなると思う"} } 
+        ]},
+        { "name_jp": "規律性", "name_en": "Discipline", "domain": "Executing", "summary": { "desc": "秩序と計画を好み、手順通りに物事を進める。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "部屋やデスクが散らかっていると集中できない", "B": "多少散らかっていても、どこに何があるかわかれば平気だ"} },
+            { "text": "", "options": {"A": "毎日のルーチンが決まっている方が快適だ", "B": "毎日同じことの繰り返しは退屈で耐えられない"} },
+            { "text": "", "options": {"A": "締め切りは余裕を持って守るよう計画を立てる", "B": "締め切り直前にならないとやる気が出ない"} },
+            { "text": "", "options": {"A": "物事をシステマチックに、正確に進めることに美しさを感じる", "B": "その時の気分やノリで進めることに楽しさを感じる"} },
+            { "text": "", "options": {"A": "予測不可能なことが起きるとストレスを感じる", "B": "ハプニングやサプライズは刺激的で歓迎だ"} }
+        ]},
+        { "name_jp": "目標志向", "name_en": "Focus", "domain": "Executing", "summary": { "desc": "目標を定め、そこに向かって脇目も振らずに集中する。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "「で、結論は？」と話を急がせたくなる", "B": "話の脱線や雑談を楽しむ余裕がある"} },
+            { "text": "", "options": {"A": "明確なゴールがない作業は時間の無駄だと感じる", "B": "ゴールが決まっていなくても、プロセス自体を楽しめる"} },
+            { "text": "", "options": {"A": "一度決めた目標は、何がなんでも達成しようとする", "B": "状況が変われば、目標を変えることに抵抗はない"} },
+            { "text": "", "options": {"A": "仕事中、他のことに気を取られず一点集中する", "B": "色々なことに興味が移り、並行して作業する"} },
+            { "text": "", "options": {"A": "「目標達成に役立つか？」が全ての判断基準だ", "B": "「面白いか？」「好きか？」が判断基準だ"} }
+        ]},
+        { "name_jp": "責任感", "name_en": "Responsibility", "domain": "Executing", "summary": { "desc": "一度約束したことは必ずやり遂げるという強い心理的拘束力を持つ。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "引き受けた仕事が終わらない時、夜通しやってでも終わらせる", "B": "無理なものは無理なので、明日に回して帰る"} },
+            { "text": "", "options": {"A": "約束を破ることは、自分の名誉に関わる重大事だ", "B": "状況によっては、約束を守れないことも仕方ない"} },
+            { "text": "", "options": {"A": "誰も見ていなくても、正しい行いをする", "B": "誰も見ていないなら、少しは手を抜いてもいい"} },
+            { "text": "", "options": {"A": "新しい仕事を頼まれると、断れずに引き受けてしまう", "B": "自分のキャパシティを超えそうなら、はっきり断る"} },
+            { "text": "", "options": {"A": "相手を失望させることに強い罪悪感を覚える", "B": "相手の期待に応えることより、自分を大切にしたい"} }
+        ]},
+        { "name_jp": "回復志向", "name_en": "Restorative", "domain": "Executing", "summary": { "desc": "問題を解決することに情熱を燃やし、あるべき姿に戻す。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "壊れているものや、上手くいっていない状況を見ると直したくなる", "B": "問題がない場所で、新しいことを始める方が好きだ"} },
+            { "text": "", "options": {"A": "人の欠点や弱みを見つけるのが早い（そして助言したくなる）", "B": "人の長所や強みを見つけるのが早い"} },
+            { "text": "", "options": {"A": "マイナスをゼロに戻す作業にやりがいを感じる", "B": "ゼロからプラスを生み出す作業にやりがいを感じる"} },
+            { "text": "", "options": {"A": "困難な問題に直面すると、解決策を探して燃える", "B": "困難な問題はできるだけ避けて通りたい"} },
+            { "text": "", "options": {"A": "自分自身の弱点を分析し、克服しようと努力する", "B": "弱点は気にせず、強みを伸ばそうとする"} }
+        ]},
+
+        // --- 影響力 (Influencing) ---
+        { "name_jp": "活発性", "name_en": "Activator", "domain": "Influencing", "summary": { "desc": "「いつ始めるの？今でしょ！」思考より行動を重視する。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "議論している時間がもどかしい、「とりあえずやってみよう」と言いたくなる", "B": "行動する前に、じっくりと計画を練り上げたい"} },
+            { "text": "", "options": {"A": "新しいボタンがあったら、説明書を読まずにとりあえず押してみる", "B": "何が起こるか理解してからボタンを押す"} },
+            { "text": "", "options": {"A": "失敗しても、何もしないよりはマシだ", "B": "失敗するくらいなら、確実になるまで待つべきだ"} },
+            { "text": "", "options": {"A": "決断したら、すぐに行動に移すスピードがある", "B": "決断しても、慎重にタイミングを見計らう"} },
+            { "text": "", "options": {"A": "走りながら考えるタイプだ", "B": "地図を見てルートを決めてから走り出すタイプだ"} }
+        ]},
+        { "name_jp": "指令性", "name_en": "Command", "domain": "Influencing", "summary": { "desc": "主導権を握り、明確な指示を出して人々を導くことを恐れない。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "意見が対立した時、自分の主張をはっきりとぶつける", "B": "意見が対立した時、波風を立てないように譲る"} },
+            { "text": "", "options": {"A": "誰も決めない膠着状態なら、自分がリーダーになって決断する", "B": "誰かが決めてくれるのを待つか、話し合いを見守る"} },
+            { "text": "", "options": {"A": "相手のためなら、耳の痛いことでも単刀直入に言う", "B": "相手を傷つけないよう、オブラートに包んで言う"} },
+            { "text": "", "options": {"A": "人に指図されるより、指図する立場にいたい", "B": "リーダーを支える参謀やサポーターの立場がいい"} },
+            { "text": "", "options": {"A": "困難な状況でも動じず、堂々としていると言われる", "B": "困難な状況では不安になり、誰かに頼りたくなる"} }
+        ]},
+        { "name_jp": "コミュニケーション", "name_en": "Communication", "domain": "Influencing", "summary": { "desc": "言葉を巧みに使い、ストーリーを語って人々を魅了する。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "何かを説明する時、つい面白おかしく話を盛ってしまう", "B": "事実をありのまま、簡潔に伝える"} },
+            { "text": "", "options": {"A": "人前で話したり、プレゼンをするのが好きだ", "B": "人前で話すのは緊張するし、できれば避けたい"} },
+            { "text": "", "options": {"A": "沈黙が続くと、何か話して場を盛り上げたくなる", "B": "沈黙が続いても気にならず、静かな時間を楽しめる"} },
+            { "text": "", "options": {"A": "自分の体験談を話して、相手を笑わせたり感動させたい", "B": "自分の話をするより、相手の話を聞く方が好きだ"} },
+            { "text": "", "options": {"A": "適切な言葉が次々と溢れてくる感覚がある", "B": "言いたいことを言葉にするのに時間がかかる"} }
+        ]},
+        { "name_jp": "競争性", "name_en": "Competition", "domain": "Influencing", "summary": { "desc": "他者と比較し、勝利することに強烈な喜びを感じる。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "2位もビリも同じだ、1位にならなければ意味がない", "B": "順位よりも、自分が楽しめたかどうかが重要だ"} },
+            { "text": "", "options": {"A": "ライバルがいると、普段以上の力が発揮できる", "B": "誰かと比較されると、プレッシャーで萎縮してしまう"} },
+            { "text": "", "options": {"A": "負けると悔しくてたまらず、勝つまでやりたくなる", "B": "負けても「相手が強かった」と素直に認められる"} },
+            { "text": "", "options": {"A": "自分の実績を他人の実績と比べてしまう", "B": "昨日の自分より成長していればそれでいい"} },
+            { "text": "", "options": {"A": "勝敗がはっきりつくゲームやスポーツが好きだ", "B": "勝ち負けのない協力型のゲームや活動が好きだ"} }
+        ]},
+        { "name_jp": "最上志向", "name_en": "Maximizer", "domain": "Influencing", "summary": { "desc": "平均ではなく「最高」を求め、強みを徹底的に磨き上げる。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "弱点を克服して平均レベルにするより、長所を伸ばして天才になりたい", "B": "苦手なことをなくして、バランスの取れた人間になりたい"} },
+            { "text": "", "options": {"A": "「今のままで十分」と言われると、「もっと良くなるのに」と不満だ", "B": "「今のままで十分」と言われると、安心して現状維持する"} },
+            { "text": "", "options": {"A": "優秀な人たちと一緒に働き、さらに上を目指したい", "B": "困っている人たちを助け、支えることに喜びを感じる"} },
+            { "text": "", "options": {"A": "何をするにも、クオリティにはとことんこだわりたい", "B": "完了させることの方が大事で、そこそこの出来で満足する"} },
+            { "text": "", "options": {"A": "才能のある人を見抜くのが得意だ", "B": "努力している人を見守るのが好きだ"} }
+        ]},
+        { "name_jp": "自己確信", "name_en": "Self-Assurance", "domain": "Influencing", "summary": { "desc": "自分の能力と判断力に絶対的な自信を持ち、我が道を行く。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "周りが全員反対しても、自分の直感を信じて進む", "B": "周りに反対されたら、自分の考えが間違っているか不安になる"} },
+            { "text": "", "options": {"A": "人生の重要な決断は、誰にも相談せず自分で決める", "B": "人生の重要な決断は、信頼できる人に相談して決める"} },
+            { "text": "", "options": {"A": "「なんとかなる」「自分ならできる」という根拠のない自信がある", "B": "常に「失敗するかもしれない」という不安がつきまとう"} },
+            { "text": "", "options": {"A": "リスクのある挑戦も、自分なら制御できると感じる", "B": "リスクはできるだけ避け、安全な道を選びたい"} },
+            { "text": "", "options": {"A": "自分の人生の舵は、完全に自分が握っている感覚がある", "B": "人生は運や環境に左右されるものだと感じる"} }
+        ]},
+        { "name_jp": "自我", "name_en": "Significance", "domain": "Influencing", "summary": { "desc": "他者から重要人物として認められ、大きな影響を与えたい。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "人から褒められたり、認められたりすることが最大のエネルギー源だ", "B": "人からの評価よりも、自分が納得できるかが大事だ"} },
+            { "text": "", "options": {"A": "「あなたにしかできない」と頼られると断れない", "B": "誰がやっても同じ仕事でも、淡々とこなせる"} },
+            { "text": "", "options": {"A": "目立つポジションや、影響力のある役割を任されたい", "B": "目立たず、陰から支える役割の方が落ち着く"} },
+            { "text": "", "options": {"A": "自分のしたことが、無視されたり気づかれないと深く傷つく", "B": "誰も気づかなくても、役に立っていればそれでいい"} },
+            { "text": "", "options": {"A": "独立心が強く、自分の名前で勝負したい", "B": "組織の一員として、チームのために働きたい"} }
+        ]},
+        { "name_jp": "社交性", "name_en": "Woo", "domain": "Influencing", "summary": { "desc": "見知らぬ人と出会い、味方につけることに喜びを感じる。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "知らない人が大勢いるパーティ会場に入るとワクワクする", "B": "知らない人が大勢いる場所は気疲れして帰りたくなる"} },
+            { "text": "", "options": {"A": "初対面の人とすぐに打ち解け、会話を盛り上げられる", "B": "初対面の人とは何を話していいかわからず緊張する"} },
+            { "text": "", "options": {"A": "できるだけ多くの人と知り合い、人脈を広げたい", "B": "少数の友人と深く狭く付き合いたい"} },
+            { "text": "", "options": {"A": "自分から積極的に話しかけるタイプだ", "B": "相手から話しかけられるのを待つタイプだ"} },
+            { "text": "", "options": {"A": "人を自分のファンにしたり、味方につけるのが得意だ", "B": "人にどう思われているか気にしすぎて、うまく振る舞えない"} }
+        ]},
+
+        // --- 人間関係構築力 (Relationship Building) ---
+        { "name_jp": "適応性", "name_en": "Adaptability", "domain": "Relationship Building", "summary": { "desc": "流れに身を任せ、「今」この瞬間の変化に柔軟に対応する。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "突然のトラブルや予定変更にも、動じずに対応できる", "B": "予定が崩れるとパニックになり、イライラする"} },
+            { "text": "", "options": {"A": "将来のことより、「今、この瞬間」を楽しむことが大事だ", "B": "将来のために、今は我慢して計画的に行動すべきだ"} },
+            { "text": "", "options": {"A": "流れに身を任せる生き方が好きだ", "B": "自分でコントロールし、計画通りに進める生き方が好きだ"} },
+            { "text": "", "options": {"A": "いろいろな仕事が飛び込んでくる忙しい状況を楽しめる", "B": "一つの仕事に集中できる落ち着いた環境を好む"} },
+            { "text": "", "options": {"A": "過去を悔やんだり未来を憂うより、現在に集中している", "B": "過去の失敗や未来の不安がつい頭をよぎる"} }
+        ]},
+        { "name_jp": "運命思考", "name_en": "Connectedness", "domain": "Relationship Building", "summary": { "desc": "あらゆる人や物事はつながっていると信じ、大きな視点を持つ。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "偶然の一致には、何か意味やメッセージがあると感じる", "B": "偶然はただの偶然であり、深い意味はないと考える"} },
+            { "text": "", "options": {"A": "私たちは皆、大きな何かの一部として繋がっていると思う", "B": "私たちは皆、独立した個であり、自分の力で生きていると思う"} },
+            { "text": "", "options": {"A": "自分の行動が、巡り巡って地球の裏側にも影響すると感じる", "B": "自分の行動の影響範囲は、自分の周囲だけだと感じる"} },
+            { "text": "", "options": {"A": "精神的なこと、スピリチュアルなことに興味がある", "B": "科学的なこと、実証できることだけを信じる"} },
+            { "text": "", "options": {"A": "多様な人々を受け入れ、共通点を見出すのが得意だ", "B": "自分と異なる価値観の人とは、距離を置きたくなる"} }
+        ]},
+        { "name_jp": "成長促進", "name_en": "Developer", "domain": "Relationship Building", "summary": { "desc": "他者の持つ可能性を見抜き、その成長を助けることに喜びを感じる。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "人のわずかな進歩や成長に気づき、感動する", "B": "結果が出ない努力にはあまり意味がないと思う"} },
+            { "text": "", "options": {"A": "自分の成功より、教え子が成功することの方が嬉しい", "B": "まずは自分が成功し、評価されることが最優先だ"} },
+            { "text": "", "options": {"A": "どんな人にも潜在能力（ポテンシャル）があると信じている", "B": "才能のない人はいくら努力しても無駄だと思うことがある"} },
+            { "text": "", "options": {"A": "根気強く人に教えたり、世話を焼くのが好きだ", "B": "自分でやった方が早いので、人に任せるのは苦手だ"} },
+            { "text": "", "options": {"A": "未熟な人をみると「育てたい」と思う", "B": "未熟な人をみると「できる人を連れてきたい」と思う"} }
+        ]},
+        { "name_jp": "共感性", "name_en": "Empathy", "domain": "Relationship Building", "summary": { "desc": "他者の感情を自分のことのように感じ取り、深く理解する。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "人が言葉にしていない感情や雰囲気まで察知してしまう", "B": "はっきり言葉にしてもらわないと、相手の気持ちはわからない"} },
+            { "text": "", "options": {"A": "悲しい映画やニュースを見ると、自分まで辛くなる", "B": "フィクションや他人のことは、客観的に見ることができる"} },
+            { "text": "", "options": {"A": "相談を受ける時、解決策よりまずは気持ちに寄り添う", "B": "相談を受ける時、感情論は抜きにして解決策を提示する"} },
+            { "text": "", "options": {"A": "「わかるよ」という言葉を心から言える", "B": "他人の気持ちなんて、本当に理解できるわけがないと思う"} },
+            { "text": "", "options": {"A": "他人の感情に巻き込まれて疲れてしまうことがある", "B": "他人の感情と自分は切り離して、クールでいられる"} }
+        ]},
+        { "name_jp": "調和性", "name_en": "Harmony", "domain": "Relationship Building", "summary": { "desc": "対立を避け、合意点を見つけることで場の平和を保つ。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "議論で勝つことより、皆が納得する合意点を探す方が大切だ", "B": "対立を恐れず、議論を戦わせて真実を明らかにすべきだ"} },
+            { "text": "", "options": {"A": "誰かが揉めていると、居心地が悪く仲裁したくなる", "B": "揉め事や対立は、変化のために必要なことだと思う"} },
+            { "text": "", "options": {"A": "自分の意見を押し通すより、周りに合わせる方が楽だ", "B": "周りと対立してでも、自分の意見を主張する"} },
+            { "text": "", "options": {"A": "チームの「和」を乱すような行動は慎むべきだ", "B": "個人の成果のためなら、多少の摩擦は気にしない"} },
+            { "text": "", "options": {"A": "実用性や共通の目的を重視して、話をまとめようとする", "B": "理論や理想を重視して、とことん議論しようとする"} }
+        ]},
+        { "name_jp": "包含", "name_en": "Includer", "domain": "Relationship Building", "summary": { "desc": "誰も排除せず、輪を広げて受け入れようとする包容力を持つ。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "輪に入れず一人でいる人を見ると、声をかけずにはいられない", "B": "一人でいたい人もいるだろうから、そっとしておく"} },
+            { "text": "", "options": {"A": "「仲間外れ」を作ることが何より嫌いだ", "B": "選ばれた人だけの閉じたグループに特別感を感じる"} },
+            { "text": "", "options": {"A": "チームのメンバーは多ければ多いほど良い", "B": "チームは精鋭の少人数であるべきだ"} },
+            { "text": "", "options": {"A": "多様な背景を持つ人たちが混ざり合う環境が好きだ", "B": "似た価値観を持つ人たちだけの環境が快適だ"} },
+            { "text": "", "options": {"A": "誰に対しても「ウェルカム」な雰囲気を出している", "B": "親しくなるまでは、壁を作ってしまう"} }
+        ]},
+        { "name_jp": "個別化", "name_en": "Individualization", "domain": "Relationship Building", "summary": { "desc": "一人ひとりのユニークな個性を見抜き、カスタマイズした対応をする。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "人をタイプや型に当てはめて語るのは好きではない", "B": "人を分類してパターン化すると理解しやすい"} },
+            { "text": "", "options": {"A": "相手の個性に合わせて、教え方や接し方を変える", "B": "公平性を期すために、誰に対しても同じ接し方をする"} },
+            { "text": "", "options": {"A": "プレゼントを選ぶ時、その人にぴったりのものを必死で探す", "B": "誰にでも喜ばれる無難なものや、定番を選ぶ"} },
+            { "text": "", "options": {"A": "チームメンバーの強みや好みを詳しく把握している", "B": "仕事上の付き合いなら、プライベートなことは知らなくていい"} },
+            { "text": "", "options": {"A": "マニュアル通りの対応よりも、その場に応じた個別の対応をしたい", "B": "例外を認めず、マニュアル通りに対応する方が楽だ"} }
+        ]},
+        { "name_jp": "ポジティブ", "name_en": "Positivity", "domain": "Relationship Building", "summary": { "desc": "伝染するような情熱と楽観性で、周囲を明るく元気づける。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "どんなに深刻な状況でも、希望やユーモアを見つけられる", "B": "深刻な状況では、最悪の事態を想定して真面目に対処する"} },
+            { "text": "", "options": {"A": "「あなたといると元気になる」とよく言われる", "B": "「もっと現実を見ろ」とよく言われる"} },
+            { "text": "", "options": {"A": "人を褒めることや、感謝を伝えることが得意だ", "B": "人を褒めるのはお世辞っぽくて苦手だ"} },
+            { "text": "", "options": {"A": "仕事は楽しくあるべきだ、と心から思っている", "B": "仕事は辛く厳しいものだ、と割り切っている"} },
+            { "text": "", "options": {"A": "ネガティブな人とは距離を置き、明るい人と過ごしたい", "B": "ネガティブな人の悩みを聞いて、一緒に考えたい"} }
+        ]},
+        { "name_jp": "親密性", "name_en": "Relator", "domain": "Relationship Building", "summary": { "desc": "特定の人々と深く堅い信頼関係を築くことを好む。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "広くて浅い人脈よりも、狭くて深い関係を大切にする", "B": "知り合いは多ければ多いほど良いと思う"} },
+            { "text": "", "options": {"A": "一度信頼した相手には、自分をさらけ出して付き合う", "B": "どんなに親しくても、自分の内面はあまり見せない"} },
+            { "text": "", "options": {"A": "古い友人を大切にし、長期間関係が続く", "B": "環境が変われば付き合う人も変わり、過去には執着しない"} },
+            { "text": "", "options": {"A": "忙しくても、親友との時間を最優先にする", "B": "忙しい時は、友人付き合いは後回しにする"} },
+            { "text": "", "options": {"A": "信頼関係のない相手との仕事はストレスを感じる", "B": "ビジネスライクな関係の方が、気楽に仕事ができる"} }
+        ]},
+
+        // --- 戦略的思考力 (Strategic Thinking) ---
+        { "name_jp": "分析思考", "name_en": "Analytical", "domain": "Strategic Thinking", "summary": { "desc": "データや事実に基づいて、物事の原因と結果を客観的に証明する。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "「証拠を見せて」が口癖だ（心の中でそう思っている）", "B": "相手の情熱や想いに心を動かされやすい"} },
+            { "text": "", "options": {"A": "感情に流されず、論理的に物事を判断する", "B": "理屈よりも、直感や感情を優先して判断する"} },
+            { "text": "", "options": {"A": "データや数字のパターンを見つけるのが好きだ", "B": "データ分析は退屈で、創造的な作業の方が好きだ"} },
+            { "text": "", "options": {"A": "主張には、しっかりとした根拠がないと納得できない", "B": "根拠が曖昧でも、話が面白ければ信じてしまう"} },
+            { "text": "", "options": {"A": "客観的事実を突き詰める姿勢が、時に「冷たい」と言われる", "B": "人の気持ちを汲み取る姿勢が、「優しい」と言われる"} }
+        ]},
+        { "name_jp": "原点思考", "name_en": "Context", "domain": "Strategic Thinking", "summary": { "desc": "過去を振り返り、現在の状況がなぜこうなったのかを理解する。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "過去の経緯や歴史を知ることで、未来が見えてくると思う", "B": "過去は変えられないので、未来のことだけを考えたい"} },
+            { "text": "", "options": {"A": "「そもそも、なぜこれを始めたのか？」と原点に戻りたくなる", "B": "「これからどうするか？」と、新しい展開を考えたくなる"} },
+            { "text": "", "options": {"A": "歴史小説やドキュメンタリー、回顧録が好きだ", "B": "SF小説や未来予測、最新トレンドが好きだ"} },
+            { "text": "", "options": {"A": "新しい環境に入ったら、まずそこの歴史や背景を学ぶ", "B": "新しい環境に入ったら、すぐに新しいプロジェクトを始める"} },
+            { "text": "", "options": {"A": "前例や過去のデータを参考に計画を立てる", "B": "前例にとらわれず、ゼロベースで計画を立てる"} }
+        ]},
+        { "name_jp": "未来志向", "name_en": "Futuristic", "domain": "Strategic Thinking", "summary": { "desc": "未来の可能性を鮮明にイメージし、周囲に希望を与える。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "「10年後、どうなっていたいか」を具体的にイメージできる", "B": "先のことはわからないので、今目の前のことに集中する"} },
+            { "text": "", "options": {"A": "未来のビジョンを語り、人をワクワクさせるのが好きだ", "B": "夢物語よりも、現実的な手順を話し合う方が好きだ"} },
+            { "text": "", "options": {"A": "新しい技術や未来の可能性について考えると興奮する", "B": "古き良き伝統や、実績のある方法に安心感を覚える"} },
+            { "text": "", "options": {"A": "「もし〜だったら」という空想にふける時間が多い", "B": "空想している時間があったら、手を動かしたい"} },
+            { "text": "", "options": {"A": "今の苦労も、輝かしい未来のためなら耐えられる", "B": "未来のために今を犠牲にするのは嫌だ"} }
+        ]},
+        { "name_jp": "着想", "name_en": "Ideation", "domain": "Strategic Thinking", "summary": { "desc": "一見関係ない事象を結びつけ、新しいアイデアを生み出す。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "常識にとらわれない、奇抜なアイデアを思いつくのが得意だ", "B": "突飛なアイデアより、実現可能な堅実な案を出すのが得意だ"} },
+            { "text": "", "options": {"A": "一見関係ない物事の間に、共通点や繋がりを見つける", "B": "物事はそれぞれ独立しており、分けて考えるべきだ"} },
+            { "text": "", "options": {"A": "ブレインストーミングで、アイデアを出し合うのが大好きだ", "B": "議論が発散するより、早く結論を出して実行に移したい"} },
+            { "text": "", "options": {"A": "単純作業やルーチンワークはすぐに飽きてしまう", "B": "決められた手順を淡々とこなすことに苦痛は感じない"} },
+            { "text": "", "options": {"A": "「面白い考えだね」「変わってるね」と言われるのが褒め言葉だ", "B": "「堅実だね」「まともだね」と言われるのが褒め言葉だ"} }
+        ]},
+        { "name_jp": "収集心", "name_en": "Input", "domain": "Strategic Thinking", "summary": { "desc": "好奇心旺盛で、情報や知識を収集・蓄積することに喜びを感じる。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "知らない言葉や事柄に出会うと、すぐに調べたくなる", "B": "自分に関係ないことなら、知らなくても気にならない"} },
+            { "text": "", "options": {"A": "本、記事、道具などを「いつか役立つかも」と保存してしまう", "B": "使わないものはすぐに捨てるミニマリスト思考だ"} },
+            { "text": "", "options": {"A": "ネットサーフィンを始めると、次々とリンクを辿って止まらない", "B": "必要な情報だけ探したら、すぐに画面を閉じる"} },
+            { "text": "", "options": {"A": "物知りだと言われることが多く、情報提供するのが好きだ", "B": "知識はひけらかさず、自分の中に留めておく"} },
+            { "text": "", "options": {"A": "旅行に行く前は、徹底的に情報をリサーチする", "B": "情報は現地に行ってから集めればいいと考える"} }
+        ]},
+        { "name_jp": "内省", "name_en": "Intellection", "domain": "Strategic Thinking", "summary": { "desc": "一人で深く考え、物事の本質を探求することを好む。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "一人で静かに考え事をする時間が絶対に必要だ", "B": "一人でいると寂しいので、常に誰かと繋がっていたい"} },
+            { "text": "", "options": {"A": "「考えること」自体が遊びであり、楽しみだ", "B": "考えるのは疲れるので、体を動かす方が好きだ"} },
+            { "text": "", "options": {"A": "答えの出ない哲学的な問いについて考えるのが好きだ", "B": "即効性のある具体的な解決策について考えるのが好きだ"} },
+            { "text": "", "options": {"A": "発言する前に、頭の中でじっくりシミュレーションする", "B": "思ったことはすぐに口に出す"} },
+            { "text": "", "options": {"A": "表層的な会話より、知的な深い議論を好む", "B": "難しい話より、気楽な雑談や冗談を好む"} }
+        ]},
+        { "name_jp": "学習欲", "name_en": "Learner", "domain": "Strategic Thinking", "summary": { "desc": "学ぶプロセスそのものを楽しみ、常に向上しようとする。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "結果が出ることよりも、できるようになるプロセスが楽しい", "B": "学ぶ過程はどうでもいいから、早く結果を出したい"} },
+            { "text": "", "options": {"A": "新しいスキルや知識を学ぶ機会があれば、積極的に飛びつく", "B": "今のままで十分通用するなら、あえて新しく学びたくない"} },
+            { "text": "", "options": {"A": "「知らないこと」に出会うと、不安より好奇心が勝る", "B": "「知らないこと」に出会うと、面倒だと感じる"} },
+            { "text": "", "options": {"A": "短期集中で新しい分野を学ぶのが得意だ", "B": "一つの分野を何年もかけて極めるのが得意だ"} },
+            { "text": "", "options": {"A": "変化の激しい環境でこそ、学習意欲が刺激される", "B": "変化のない安定した環境で、ルーチンをこなしたい"} }
+        ]},
+        { "name_jp": "戦略性", "name_en": "Strategic", "domain": "Strategic Thinking", "summary": { "desc": "複雑な状況からパターンを見出し、目的に至る最適なルートを見つける。" }, 
+          "questions": [
+            { "text": "", "options": {"A": "常に「もしこうなったら、こうしよう」と複数の選択肢を持っている", "B": "選択肢を迷うより、一つの道を信じて突き進む"} },
+            { "text": "", "options": {"A": "複雑な状況を俯瞰して、最短ルートを見つけるのが得意だ", "B": "目の前の障害物を一つずつ、力技で突破するのが得意だ"} },
+            { "text": "", "options": {"A": "直感的に「こっちの道はいける」「これはダメだ」とわかる", "B": "やってみないとわからないので、まずは試行錯誤する"} },
+            { "text": "", "options": {"A": "人の話を聞きながら、落とし所や結論を予測している", "B": "人の話は最後まで聞かないとわからないと思う"} },
+            { "text": "", "options": {"A": "行き詰まった時、全く別のアプローチを思いつける", "B": "行き詰まった時、さらに努力量を増やして解決しようとする"} }
+        ]}
+      ]
+    };
+
+    let allQuestions = [];
+    let currentQuestionIndex = 0;
+    let scores = {}; 
+    let perfectCounts = {}; 
+    let historyStack = [];
+    let currentMode = 'precision';
+    let aiReportText = ""; 
+
+    // DOM要素
+    const startScreen = document.getElementById('start-screen');
+    const quizScreen = document.getElementById('quiz-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const btnBack = document.getElementById('btn-back');
+    const restoreMsg = document.getElementById('restore-msg');
+
+    // ▼▼▼ 保存・読み込みロジック ▼▼▼
+    
+    function saveState() {
+        const state = {
+            allQuestions,
+            currentQuestionIndex,
+            scores,
+            perfectCounts,
+            historyStack,
+            currentMode,
+            aiReportText,
+            screen: resultScreen.classList.contains('hidden') ? (quizScreen.classList.contains('hidden') ? 'start' : 'quiz') : 'result',
+            userId
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+        const json = localStorage.getItem(STORAGE_KEY);
+        if (!json) return false;
+
+        try {
+            const state = JSON.parse(json);
+            
+            allQuestions = state.allQuestions;
+            currentQuestionIndex = state.currentQuestionIndex;
+            scores = state.scores;
+            perfectCounts = state.perfectCounts;
+            historyStack = state.historyStack;
+            currentMode = state.currentMode;
+            aiReportText = state.aiReportText || "";
+            userId = state.userId || userId;
+
+            if (state.screen === 'quiz') {
+                startScreen.classList.add('hidden');
+                quizScreen.classList.remove('hidden');
+                restoreMsg.classList.remove('hidden');
+                renderQuestion();
+                return true;
+            } else if (state.screen === 'result') {
+                showResult(true);
+                return true;
+            }
+        } catch (e) {
+            console.error("Save data corrupted", e);
+            localStorage.removeItem(STORAGE_KEY);
+        }
+        return false;
+    }
+
+    function resetDiagnosis() {
+        if(confirm("現在の進捗を削除して、最初からやり直しますか？")) {
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+        }
+    }
+
+    function startQuiz(mode) {
+        currentMode = mode;
+        prepareQuestions(mode);
+        currentQuestionIndex = 0;
+        startScreen.classList.add('hidden');
+        quizScreen.classList.remove('hidden');
+        renderQuestion();
+        saveState();
+    }
+
+    function prepareQuestions(mode) {
+        allQuestions = [];
+        scores = {};
+        perfectCounts = {};
+        historyStack = [];
+        aiReportText = "";
+        
+        diagnosisData.themes.forEach(theme => {
+            scores[theme.name_jp] = 0;
+            perfectCounts[theme.name_jp] = 0;
+            if(theme.questions) {
+                // 配列をコピーしてシャッフル
+                let shuffled = [...theme.questions];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+
+                let questionsToAdd = [];
+                if (mode === 'simple') {
+                    // 各テーマからランダム1問
+                    questionsToAdd = shuffled.slice(0, 1);
+                } else if (mode === 'precision') {
+                    // 各テーマからランダム3問
+                    questionsToAdd = shuffled.slice(0, 3);
+                } else {
+                    // 全問 (超精密)
+                    questionsToAdd = shuffled;
+                }
+
+                questionsToAdd.forEach(q => {
+                    allQuestions.push({
+                        theme: theme.name_jp,
+                        name_en: theme.name_en,
+                        text: q.text,
+                        options: q.options
+                    });
+                });
+            }
+        });
+        
+        // 全体の出題順をシャッフル
+        for (let i = allQuestions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+        }
+    }
+
+    function renderQuestion() {
+        if (currentQuestionIndex >= allQuestions.length) {
+            showResult();
+            return;
+        }
+        const q = allQuestions[currentQuestionIndex];
+        
+        if (currentQuestionIndex > 0) btnBack.classList.remove('hidden'); 
+        else btnBack.classList.add('hidden');
+
+        // 問題文が空文字の場合はテーマ名などをヒントに出してもいいが、今回はなし
+        // document.getElementById('question-text').textContent = q.text || "あなたの感覚に近いのは？";
+        
+        document.getElementById('text-a').textContent = q.options.A;
+        document.getElementById('text-b').textContent = q.options.B;
+
+        const progress = ((currentQuestionIndex) / allQuestions.length) * 100;
+        document.getElementById('progress-bar').style.width = `${progress}%`;
+        document.getElementById('progress-text').textContent = `${currentQuestionIndex + 1} / ${allQuestions.length}`;
+        
+        window.scrollTo(0, 0);
+    }
+
+    function handleAnswer(scaleValue) {
+        const q = allQuestions[currentQuestionIndex];
+        let points = 0;
+        switch(scaleValue) {
+            case 1: points = 0; break;
+            case 2: points = 5; break;
+            case 3: points = 10; break;
+            case 4: points = 20; break;
+            case 5: 
+                points = 30; 
+                perfectCounts[q.theme]++; 
+                break;
+        }
+        
+        scores[q.theme] += points;
+        historyStack.push({ theme: q.theme, points: points, isPerfect: (scaleValue === 5) });
+        currentQuestionIndex++;
+        
+        saveState(); 
+
+        setTimeout(renderQuestion, 150);
+    }
+
+    function goBack() {
+        if (currentQuestionIndex === 0 || historyStack.length === 0) return;
+        currentQuestionIndex--;
+        const lastAction = historyStack.pop();
+        if (lastAction) { 
+            scores[lastAction.theme] -= lastAction.points; 
+            if(lastAction.isPerfect) perfectCounts[lastAction.theme]--;
+        }
+        saveState();
+        renderQuestion();
+    }
+
+    function showResult(isRestored = false) {
+        quizScreen.classList.add('hidden');
+        startScreen.classList.add('hidden');
+        resultScreen.classList.remove('hidden');
+        btnBack.classList.add('hidden');
+        
+        document.getElementById('page-title').textContent = "診断結果レポート";
+
+        const sortedScores = Object.entries(scores).sort((a, b) => {
+            if (b[1] !== a[1]) return b[1] - a[1];
+            return perfectCounts[b[0]] - perfectCounts[a[0]];
+        });
+
+        drawRankList(sortedScores);
+        drawBalanceBar(sortedScores);
+        drawRadarChart(sortedScores);
+        
+        saveState();
+
+        if (isRestored && aiReportText) {
+             document.getElementById('analyzing-overlay').style.display = 'none';
+             const reportCard = document.getElementById('ai-report-content');
+             reportCard.classList.remove('hidden');
+             document.getElementById('ai-text').innerHTML = aiReportText;
+        } else {
+             const top5 = sortedScores.slice(0, 5).map(i => i[0]).join(', ');
+             const bottom5 = sortedScores.slice(-5).reverse().map(i => i[0]).join(', ');
+             runAnalysis(top5, bottom5);
+        }
+    }
+
+    function drawRankList(sortedScores) {
+        const listContainer = document.getElementById('full-rank-list');
+        listContainer.innerHTML = '';
+        const domainColors = { "Executing": "var(--executing)", "Influencing": "var(--influencing)", "Relationship Building": "var(--relationship)", "Strategic Thinking": "var(--strategic)" };
+
+        sortedScores.forEach((item, index) => {
+            const themeName = item[0];
+            const score = item[1];
+            const themeInfo = diagnosisData.themes.find(t => t.name_jp === themeName);
+            const rank = index + 1;
+            let rowClass = "rank-item";
+            if(rank <= 5) rowClass += " top5";
+
+            const li = document.createElement('li');
+            li.className = rowClass;
+            
+            li.innerHTML = `
+                <div class="rank-header-row">
+                    <div style="display:flex; align-items:center;">
+                        <span class="rank-num">${rank}</span>
+                        <span class="rank-name">${themeName}</span>
+                    </div>
+                    <div style="display:flex; align-items:center;">
+                        <span class="score-pill">Score: ${score}</span>
+                        <span class="domain-badge" style="background:${domainColors[themeInfo.domain]}">${themeInfo.domain}</span>
+                    </div>
+                </div>
+                <div class="rank-desc-row">
+                   ${themeInfo.summary.desc}
+                </div>
+            `;
+            listContainer.appendChild(li);
+        });
+    }
+
+    function drawBalanceBar(sortedScores) {
+        const domainScores = { "Executing": 0, "Influencing": 0, "Relationship Building": 0, "Strategic Thinking": 0 };
+        sortedScores.forEach(item => {
+            const theme = diagnosisData.themes.find(t => t.name_jp === item[0]);
+            if(theme) domainScores[theme.domain] += item[1];
+        });
+
+        const totalScore = Object.values(domainScores).reduce((a,b)=>a+b, 0);
+        const barContainer = document.getElementById('balance-bar-container');
+        barContainer.innerHTML = '';
+        const domainColors = { "Executing": "var(--executing)", "Influencing": "var(--influencing)", "Relationship Building": "var(--relationship)", "Strategic Thinking": "var(--strategic)" };
+        
+        Object.entries(domainScores)
+            .sort((a,b) => b[1] - a[1])
+            .forEach(([domain, score]) => {
+                if(score > 0) {
+                    const width = (score / totalScore) * 100;
+                    const div = document.createElement('div');
+                    div.style.width = `${width}%`;
+                    div.style.backgroundColor = domainColors[domain];
+                    div.className = 'balance-bar';
+                    barContainer.appendChild(div);
+                }
+            });
+    }
+
+    function drawRadarChart(sortedScores) {
+        const container = document.getElementById('radar-chart-container');
+        const domainScores = { "Executing": 0, "Influencing": 0, "Relationship Building": 0, "Strategic Thinking": 0 };
+        const domainCounts = { "Executing": 0, "Influencing": 0, "Relationship Building": 0, "Strategic Thinking": 0 };
+
+        diagnosisData.themes.forEach(t => domainCounts[t.domain]++);
+        sortedScores.forEach(item => {
+            const theme = diagnosisData.themes.find(t => t.name_jp === item[0]);
+            if(theme) domainScores[theme.domain] += item[1];
+        });
+
+        // 満点の基準（モードによって変える必要はない、比率で出す）
+        // 1問あたり最大30点。超精密だと各5-6問あるので、平均化して正規化する
+        // ここでは簡易的に「獲得スコア / (その領域の質問数 * 30点) * 100」で算出
+        
+        // 実際に回答した質問数をカウントする必要があるが、
+        // 簡易的に全問正解(30点)した場合の比率で出す
+        
+        // ★修正: currentModeに基づいて分母を調整
+        let qPerTheme = 0;
+        if(currentMode === 'simple') qPerTheme = 1;
+        else if(currentMode === 'precision') qPerTheme = 3;
+        else qPerTheme = 5.2; // 平均
+
+        // domainCounts[key] * qPerTheme * 30 が満点
+        // しかしテーマによって質問数が違う（超精密）ので、
+        // 「全テーマのスコア合計 / 全テーマの満点合計」で出すのが正確だが、
+        // ここでは視覚的なバランスが見えればいいので、
+        // 各ドメインのスコア合計 / (ドメインのテーマ数 * 平均質問数 * 30) で計算
+
+        const maxScorePerTheme = 30 * qPerTheme; 
+
+        const percentages = {
+            "Executing": (domainScores["Executing"] / (domainCounts["Executing"] * maxScorePerTheme)) * 100,
+            "Influencing": (domainScores["Influencing"] / (domainCounts["Influencing"] * maxScorePerTheme)) * 100,
+            "Relationship Building": (domainScores["Relationship Building"] / (domainCounts["Relationship Building"] * maxScorePerTheme)) * 100,
+            "Strategic Thinking": (domainScores["Strategic Thinking"] / (domainCounts["Strategic Thinking"] * maxScorePerTheme)) * 100
+        };
+
+        for (let key in percentages) if (percentages[key] > 100) percentages[key] = 100;
+
+        const size = 260; 
+        const center = size / 2;
+        const radius = 90; 
+        
+        const getCoords = (domain, pct) => {
+            const ratio = pct / 100;
+            const r = radius * ratio;
+            const domainMap = {
+                'Executing': [0, -1],
+                'Influencing': [1, 0],
+                'Relationship Building': [0, 1],
+                'Strategic Thinking': [-1, 0]
+            };
+            const v = domainMap[domain];
+            return [center + v[0] * r, center + v[1] * r];
+        };
+
+        const pEx = getCoords('Executing', percentages['Executing']);
+        const pInf = getCoords('Influencing', percentages['Influencing']);
+        const pRel = getCoords('Relationship Building', percentages['Relationship Building']);
+        const pStr = getCoords('Strategic Thinking', percentages['Strategic Thinking']);
+
+        const polyPoints = `${pEx[0]},${pEx[1]} ${pInf[0]},${pInf[1]} ${pRel[0]},${pRel[1]} ${pStr[0]},${pStr[1]}`;
+
+        let gridSVG = '';
+        [0.25, 0.5, 0.75, 1].forEach(ratio => {
+            const r = radius * ratio;
+            gridSVG += `<polygon points="${center},${center-r} ${center+r},${center} ${center},${center+r} ${center-r},${center}" fill="none" stroke="#f0f0f0" stroke-width="1" />`;
+        });
+
+        const labelOffset = 20;
+        
+        const svgContent = `
+            <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+                ${gridSVG}
+                <line x1="${center}" y1="${center-radius}" x2="${center}" y2="${center+radius}" stroke="#f0f0f0" stroke-width="1" />
+                <line x1="${center-radius}" y1="${center}" x2="${center+radius}" y2="${center}" stroke="#f0f0f0" stroke-width="1" />
+                
+                <polygon points="${polyPoints}" fill="rgba(39, 174, 96, 0.1)" stroke="#27ae60" stroke-width="2" />
+                <circle cx="${pEx[0]}" cy="${pEx[1]}" r="4" fill="#8e44ad" />
+                <circle cx="${pInf[0]}" cy="${pInf[1]}" r="4" fill="#d35400" />
+                <circle cx="${pRel[0]}" cy="${pRel[1]}" r="4" fill="#2980b9" />
+                <circle cx="${pStr[0]}" cy="${pStr[1]}" r="4" fill="#27ae60" />
+
+                <text x="${center}" y="${center - radius - 10}" text-anchor="middle" font-size="11" fill="#8e44ad" font-weight="bold">実行力</text>
+                <text x="${center + radius + labelOffset}" y="${center + 4}" text-anchor="middle" font-size="11" fill="#d35400" font-weight="bold">影響力</text>
+                <text x="${center}" y="${center + radius + 15}" text-anchor="middle" font-size="11" fill="#2980b9" font-weight="bold">人間関係</text>
+                <text x="${center - radius - labelOffset}" y="${center + 4}" text-anchor="middle" font-size="11" fill="#27ae60" font-weight="bold">思考</text>
+            </svg>
+        `;
+        container.innerHTML = svgContent;
+    }
+
+    let loadingTimer;
+
+    async function runAnalysis(top5, bottom5) {
+        if (!DIFY_API_KEY || DIFY_API_KEY.length < 10) {
+            document.getElementById('ai-text').textContent = "⚠️ APIキーが設定されていません。";
+            return;
+        }
+
+        const overlay = document.getElementById('analyzing-overlay');
+        const reportCard = document.getElementById('ai-report-content');
+        const loadingMsg = document.getElementById('loading-msg');
+        
+        overlay.style.display = 'flex';
+        reportCard.classList.add('hidden');
+
+        const messages = ["資質データを送信中...", "思考パターンを分析中...", "強みの組み合わせを計算中...", "パーソナライズされたレポートを作成中..."];
+        let msgIndex = 0;
+        loadingTimer = setInterval(() => {
+            msgIndex = (msgIndex + 1) % messages.length;
+            loadingMsg.textContent = messages[msgIndex];
+        }, 1500);
+
+        const payload = {
+            inputs: { "top_5": top5, "bottom_5": bottom5 },
+            query: "診断レポートを作成してください",
+            response_mode: "blocking",
+            user: userId,
+            auto_generate_name: false
+        };
+
+        try {
+            const response = await fetch(`${DIFY_BASE_URL}/chat-messages`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${DIFY_API_KEY}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || "API Error");
+
+            clearInterval(loadingTimer);
+            overlay.style.display = 'none';
+            reportCard.classList.remove('hidden');
+
+            const cleanText = cleanAIResponse(data.answer);
+            let htmlText = cleanText
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/### (.*)/g, '<h3>$1</h3>')
+                .replace(/## (.*)/g, '<h2>$1</h2>')
+                .replace(/- (.*)/g, '<li>$1</li>');
+            
+            document.getElementById('ai-text').innerHTML = htmlText;
+
+            aiReportText = htmlText;
+            saveState();
+
+        } catch (error) {
+            clearInterval(loadingTimer);
+            loadingMsg.textContent = "エラーが発生しました: " + error.message;
+            loadingMsg.style.color = "red";
+        }
+    }
+
+    function cleanAIResponse(text) {
+        let cleaned = text.replace(/<think>[\s\S]*?<\/think>/g, "");
+        return cleaned.trim();
+    }
+
+    window.onload = function() {
+        const loaded = loadState();
+        if(loaded) {
+            console.log("Resumed from localStorage");
+        }
+    };
+</script>
+
+</body>
+</html>
